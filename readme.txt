@@ -4,7 +4,7 @@ Donate link:
 Tags: Thekendienst, shift schedule, work plan, work schedule, Schichtdienst, Schichtplan
 Requires at least: 2.8
 Tested up to: 3.0.5
-Stable tag: trunk
+Stable tag: 0.2Beta
 
 This Plugin helps to create and organize shift schedules. Within the plugin you can create events, seperated by time frames and fill those time frames with a predefined number of persons on duty. (english isn't easy for me, sorry)
 
