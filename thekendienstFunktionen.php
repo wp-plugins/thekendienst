@@ -1,6 +1,4 @@
 <?php
-//globale Variablen
-$thekendienst_db_version = "0.1";
 
 
 /* *************************************************** 
@@ -54,19 +52,19 @@ function Aufstellunganzeigen($veranstaltungsname,$id){
 	
 function aufklappenListederZeitfenster($ID, $AufstellungsName) { //Ruft eine Liste aller Zeitfenster zur Mutter-Veranstaltung auf ($ID)
 	global $wpdb, $table_prefix;
-	$sql='SELECT IDZeitfenster, Tag, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter FROM '.$table_prefix.'thekendienst WHERE AufstellungsID="'.$ID.'" ORDER BY AufstellungsID, IDZeitfenster, Tag, Startzeit, IDMitarbeiter' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
+	$sql='SELECT IDZeitfenster, Tag, KommentarZeitfenster, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter FROM '.$table_prefix.'thekendienst WHERE AufstellungsID="'.$ID.'" ORDER BY AufstellungsID, IDZeitfenster, Tag, Startzeit, IDMitarbeiter' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
 	$tabelle=$wpdb->get_results($sql, ARRAY_A); //übertragen der Ergebnisse in ein mit Spaltennamen indexiertes Array
 	if($tabelle!=NULL) {//überprüft ob die Veranstaltung überhaupt existiert.
 		$rueckgabe='
 		<tr>
 			<td></td>
-			<td colspan="3">';
+			<td colspan="4">';
 		$rueckgabe.='
 				<!-- Anfang der Zeitfenster -->
 				<table class="thekendienst_zeitfenster" id="thekendienst_zeitfenster_'.$ID.'">					
 					<tbody>
 						<tr class="headline">
-							<td>ID</td><td colspan="4">Zeitfenster</td>
+							<td>ID</td><td colspan="5">Zeitfenster</td>
 						</tr>';
 		$rueckgabe.='	<tr class="headline">
 							<td>&nbsp;</td>
@@ -74,6 +72,7 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName) { //Ruft eine Lis
 							<td>Startzeit</td>
 							<td>Endzeit</td>
 							<td style="text-align: center;">Anzahl der <br/>Mitarbeiter</td>
+							<td>Kommentar</td>
 						</tr>'; //Die Kopfzeile der Zeitfenster wird generiert.
 		$i=$i++;
 		$hoechstezeitfensterID=0;
@@ -88,6 +87,7 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName) { //Ruft eine Lis
 							<td>'.$zeile[Startzeit].'</td>
 							<td>'.$zeile[Endzeit].'</td>
 							<td align="center">'.$zeile[AnzahlMitarbeiter]/*.'('.$Anzahlderschoneingetragenen.')'*/.'</td>
+							<td>'.$zeile[KommentarZeitfenster].'</td>
 						</tr>';//Gibt das aktuell aufgerufene (eindeutige!) Zeitfenster aus
 			$rueckgabe.=namensliste($ID, $zeile[IDZeitfenster]);//ruft das dazugehörige Feld der eingetragenen wieder.
 			if($zeile[IDZeitfenster]>=$hoechstezeitfensterID) {//ermittelt ob die aktuelle ID des aktuellen Zeitfelds höher ist als irgendein vorher aufgerufenes. wenn ja:
@@ -100,7 +100,7 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName) { //Ruft eine Lis
 		if (is_admin()) { //überprüft ob der Betrachter angemeldet und berechtigt ist
 			$rueckgabe.='
 						<tr>
-							<td colspan="5">';
+							<td colspan="6">';
 			$rueckgabe.=		neueszeitfensterformular($ID, $AufstellungsName, $hoechstezeitfensterID, $letzterTag, $letzteEndzeit); //baut formular für neue Zeitfenster auf (wird nur gezeigt wenn berechtigt) - übergibt relevante Daten
 			$rueckgabe.=	'</td>
 						</tr>';//ruft eine Funktion auf, die ein Formular aufmacht, welches hidden die Variable $ID und $AufstellungsName enthält und um die Einträge IDZEitfenster, Tag, Startzeit, endzeit ergänzt werden kann. Der Tag und die vorhergehende Endzeit sollte in der Startzeit per default auftauchen.
@@ -121,20 +121,21 @@ function namensliste($IDAufstellung, $IDZeitfenster) {//gibt die Liste der einge
 	$tabelle=$wpdb->get_results($sql, ARRAY_A);
 	if($tabelle!=NULL) {//Veranstaltung existend? Schon jemand eingetragen?
 		//Personenliste innerhalb der Zeitfenster anzeigen
-		if(current_user_can('manage_options')) $anzeigederpersonen='block'; else $anzeigederpersonen='none';
+		if(current_user_can('manage_options')) $anzeigederpersonen='block'; else $anzeigederpersonen='block';
 		$rueckgabe='
 						<tr>
+							<td></td>
 							<td>
 								<a href="javascript:ein_ausklappen(\'thekendienst_namen_\',\''.$IDAufstellung.'_'.$IDZeitfenster.'\')">
-									&harr;
+									(verbergen)
 								</a>
 							</td>'; //Erzeugt einen durch Javascript realisierten Einklapp-Knopf
-		$rueckgabe.='		<td colspan="3">
+		$rueckgabe.='		<td colspan="4">
 								<table class="thekendienst_namen" id="thekendienst_namen_'.$IDAufstellung.'_'.$IDZeitfenster.'" style="display: '.$anzeigederpersonen.'">
 									<tbody>
 										<tr class="headline">
 											<td class="thekendienst_ID">ID</td>
-											<td colspan="2" class="thekendienst_namen_ueberschrift" align="left">Name</td>
+											<td colspan="3" class="thekendienst_namen_ueberschrift" align="left">Name</td>
 											<td>
 											</td>
 										</tr>'; //Gibt fir Überschrift der Personenliste 
@@ -143,7 +144,7 @@ function namensliste($IDAufstellung, $IDZeitfenster) {//gibt die Liste der einge
 			if($zeile[IDMitarbeiter]==0 || $zeile[IDMitarbeiter]==null) {//Prüft ob ein Mitarbeiter eingetragen ist. Wenn nicht:
 				$rueckgabe.='			<tr>
 											<td></td>
-											<td align="left">-noch Platz-</td>
+											<td colspan="2" align="left">-noch Platz-</td>
 											<td></td>
 											<td><a href="javascript:ein_ausklappen(\'Eintragfeld_\',\''.$ID_Unique.'\',true)" id="Eintragfeld_'.$ID_Unique.'_ausloeser">eintragen</a></td>
 											<td></td>
@@ -188,7 +189,7 @@ function namensliste($IDAufstellung, $IDZeitfenster) {//gibt die Liste der einge
 				if($zeile[IDMitarbeiter]=="999") $idM="x"; else $idM=$zeile[IDMitarbeiter];
 				$rueckgabe.='			<tr>
 											<td>'.$idM.'</td>
-											<td colspan="2" align="left">'.$zeile[NameMitarbeiter].'</td>
+											<td colspan="3" align="left">'.$zeile[NameMitarbeiter].'</td>
 											<td>
 												<form action="'.$location.'" method="post" name="austragen'.$ID_Unique.'_'.$zeile[IDMitarbeiter].'">
 												<div id="Austragsfeld_'.$ID_Unique.'_'.$zeile[IDMitarbeiter].'_ausloeser" style="display:">
@@ -278,7 +279,8 @@ function NeueVeranstaltungFormular($letzteAufstellungsID) {//Baut ein Formular a
 	$id=$letzteAufstellungsID+1; //berechnet die neue ID
 	$rueckgabe='
 	<tr>
-		<td colspan="4">
+		<td></td>
+		<td colspan="5">
 			<form action="'./*$_SERVER['PHP_SELF']*/$location.'" method="post">';//FOrmular eröffnet, referenziert auf dieses Script.
 	$rueckgabe.='
 				<table class="thekendienst_main" id="thekendienst_main_NeueVeranstaltung">';
@@ -312,18 +314,21 @@ function neueszeitfensterformular($IDAufstellung, $IDAufstellungsName, $IDLetzte
 	$rueckgabe='
 								<form action="'.$location.'" method="post">
 									<table class="thekendienst_namen" id="thekendienst_namen_'.$IDAufstellung.'_'.$IDZeitfenster.'">
-										<tr><td colspan="4" align="left"><strong>Neues Zeitfenster erzeugen</strong></td></tr>
+										<tr><td colspan="5" align="left"><strong>Neues Zeitfenster erzeugen</strong></td></tr>
 										<tr>
 											<td>Tag</td>
+
 											<td>Startzeit</td>
 											<td>Endzeit</td>
 											<td>Anzahl der<br/>Mithelfer</td>
+											<td>Kommentar</td>
 										</tr>
 										<tr>
 											<td><input type="text" size="10" maxlength="10" name="Tag" value="'.$defaulttag.'"/></td>
 											<td><input type="text" size="10" maxlength="8" name="Startzeit" value="'.$defaultstartzeit.'" /></td>
 											<td><input type="text" size="10" maxlength="8" name="Endzeit"  value="'.$defaultstartzeit.'"/></td>
 											<td><input type="text" size="10" maxlength="2" name="AnzahlMitarbeiter" value="2"/></td>
+											<td><input type="text" size="10" maxlength="44" name="KommentarZeitfenster" value=""/></td>
 										</tr>
 										<tr>
 											<td>
@@ -358,8 +363,8 @@ function neueveranstaltungeintragen($content) {//Veranstaltung in Datenbank eint
 				AufstellungsName="'.$zeile["AufstellungsName"].'"
 				)'; //Überprüfung ob ein Zeitfenster mit der gleichen ID (und anderem) existiert.
 		$sql='INSERT INTO '.$table_prefix.'thekendienst (AufstellungsID, AufstellungsName) VALUES ("'.$zeile["AufstellungsID"].'","'.$zeile["AufstellungsName"].'")'; 
-		echo $sql;
-		echo $sql_abfrage;
+		//echo $sql;
+		//echo $sql_abfrage;
 		$Anzahl=$wpdb->query($sql_abfrage);
 		if($Anzahl<=1) {//Nur einer oder kein Eintrag da? dann:
 		  	$wpdb->query($sql);//Wenn einer vorhanden wird dieser aktualisiert (ergänzt)
@@ -399,6 +404,7 @@ global $wpdb, $table_prefix;
 		$sql='
 			UPDATE '.$table_prefix.'thekendienst 
 			SET IDZeitfenster="'.$zeile["IDZeitfenster"].'", 
+				KommentarZeitfenster="'.$zeile["KommentarZeitfenster"].'",
 				Tag="'.$zeile["Tag"].'", 
 				Startzeit="'.$zeile["Startzeit"].'", 
 				Endzeit="'.$zeile["Endzeit"].'", 
@@ -413,6 +419,7 @@ global $wpdb, $table_prefix;
 			SET AufstellungsID="'.$zeile["AufstellungsID"].'",
 				AufstellungsName="'.$zeile["AufstellungsName"].'",
 				IDZeitfenster="'.$zeile["IDZeitfenster"].'", 
+				KommentarZeitfenster="'.$zeile["KommentarZeitfenster"].'",
 				Tag="'.$zeile["Tag"].'", 
 				Startzeit="'.$zeile["Startzeit"].'", 
 				Endzeit="'.$zeile["Endzeit"].'", 
@@ -557,34 +564,6 @@ function Javascriptladen() {//Lädt die JavaScript-Funktionen
 }
 
 
-/* *************************************************** 
-Tabelle anlegen sofern noch nicht vorhanden.
-*************************************************** */
 
-function Datenbankanlegen() {//Sollte keine Tabelle vorliegen, wird eine erzeugt
-   global $wpdb, $table_prefix;
-   global $thekendienst_db_version;
-   $table_name = $table_prefix."thekendienst";
-   if($wpdb->get_var("SHOW TABLES LIKE ".$table_name) != $table_name) { //überprüft ob die Tabelle noch nicht existiert
-		$sql = 'CREATE TABLE '.$table_name.' (
-		ID mediumint(9) NOT NULL AUTO_INCREMENT KEY,
-		AufstellungsID mediumint(9) NOT NULL,
-		AufstellungsName varchar(45) DEFAULT "notset",
-		IDZeitfenster smallint(9),
-		Tag date,
-		Startzeit time,
-		Endzeit time,
-		AnzahlMitarbeiter tinyint(9) DEFAULT "1",
-		IDMitarbeiter smallint(9) DEFAULT NULL,
-		NameMitarbeiter varchar(40),
-		Ausgeblendet boolean DEFAULT "0")';//Tabellenstruktur wird angelegt.
-
-		require_once(ABSPATH . 'wp-admin/includes/upgrade.php'); //emröglicht Zugriff auf dbDelta-Funktion
-		dbDelta($sql);//erzeugt neue Tabelle in Datenbank
-		add_option("jal_db_version", $jal_db_version);
-		return mysql_error().'<br><strong>Die Datenbank wurde erfolgreich angelegt</strong><br>';
-   }
-   else return;
-}
 
 ?>
