@@ -7,10 +7,10 @@ Schalten zu welcher Funktion es gehen soll.
 *************************************************** */
 //print_r($_POST);
 
-if(isset($_POST['zeitfenstereintragen'])) add_filter('the_content', 'zeitfenstereintragen');
-elseif(isset($_POST['neueveranstaltunggesetzt'])) add_filter('the_content','neueveranstaltungeintragen');
-elseif(isset($_POST['eintragen'])) add_filter('the_content','eintragenName');
+if(isset($_POST['eintragen'])) add_filter('the_content','eintragenName');
 elseif(isset($_POST['austragen'])) add_filter('the_content','austragenName');
+//elseif(isset($_POST['zeitfenstereintragen'])) add_filter('the_content', 'zeitfenstereintragen');
+//elseif(isset($_POST['neueveranstaltunggesetzt'])) add_filter('the_content','neueveranstaltungeintragen');
 add_filter('the_content', 'ThekendienstTabellenSchalter');
 
 /* *************************************************** 
@@ -21,15 +21,17 @@ function ThekendienstTabellenSchalter($content) {
 	global $wpdb,$table_prefix;
 	$sql='SELECT AufstellungsID, AufstellungsName FROM '.$table_prefix.'thekendienst GROUP BY AufstellungsID ORDER BY AufstellungsID';
 	$tabelle=$wpdb->get_results($sql, ARRAY_A);
-	foreach($tabelle as $zeile) {
-		$replacestring1='[Thekendienst='.$zeile['AufstellungsID'].']';
-		$replacestring2='[Thekendienst='.$zeile['AufstellungsName'].']';
-		//Hier fehlt eine Funktion zum überprüfen ob eine Zeichenfolge in $content enthalten ist
-		if(strpos($content, $replacestring1)) {
-			$content=str_replace($replacestring1, Aufstellunganzeigen($zeile['AufstellungsName'], $zeile['AufstellungsID']), $content);
-		}
-		elseif(strpos($content, $replacestring2)) {
-			$content=str_replace($replacestring2, Aufstellunganzeigen($zeile['AufstellungsName'], $zeile[AufstellungsID]),$content);
+	if(isset($tabelle[0])) {
+		foreach($tabelle as $zeile) {
+			$replacestring1='[Thekendienst='.$zeile['AufstellungsID'].']';
+			$replacestring2='[Thekendienst='.$zeile['AufstellungsName'].']';
+			//Hier fehlt eine Funktion zum überprüfen ob eine Zeichenfolge in $content enthalten ist
+			if(strpos($content, $replacestring1)) {
+				$content=str_replace($replacestring1, Aufstellunganzeigen($zeile['AufstellungsName'], $zeile['AufstellungsID']), $content);
+			}
+			elseif(strpos($content, $replacestring2)) {
+				$content=str_replace($replacestring2, Aufstellunganzeigen($zeile['AufstellungsName'], $zeile[AufstellungsID]),$content);
+			}
 		}
 	}
 	return $content;
@@ -52,18 +54,25 @@ function Aufstellunganzeigen($veranstaltungsname,$id){
 }
 	
 function aufklappenListederZeitfenster($ID, $AufstellungsName, $editierbar=true) { //Ruft eine Liste aller Zeitfenster zur Mutter-Veranstaltung auf ($ID)
-	global $wpdb, $table_prefix;
+	global $wpdb, $table_prefix, $user_ID;
+	$letzteEndzeit="00:00:00";
 	$i=0;
 	(int) $further_i=null;
-	$sql='SELECT IDZeitfenster, Tag, KommentarZeitfenster, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter FROM '.$table_prefix.'thekendienst WHERE AufstellungsID="'.$ID.'" ORDER BY AufstellungsID, IDZeitfenster, Tag, Startzeit, IDMitarbeiter' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
+	$sql='SELECT IDZeitfenster, Tag, KommentarZeitfenster, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE (AufstellungsID="'.$ID.'" AND Archiv!="1") ORDER BY AufstellungsID, IDZeitfenster, Tag, Startzeit, IDMitarbeiter' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
+	$sql2='SELECT IDZeitfenster, Tag, KommentarZeitfenster, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE (AufstellungsID="'.$ID.'") ORDER BY AufstellungsID, IDZeitfenster, Tag, Startzeit, IDMitarbeiter' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
 	$tabelle=$wpdb->get_results($sql, ARRAY_A); //übertragen der Ergebnisse in ein mit Spaltennamen indexiertes Array
-	if($tabelle!=NULL) {//überprüft ob die Veranstaltung überhaupt existiert.
+	$tabelle2=$wpdb->get_results($sql2, ARRAY_A); //übertragen der Ergebnisse in ein mit Spaltennamen indexiertes Array
+	if(current_user_hat_es_ausgeblendet($user_ID, $tabelle[0]['Ausgeblendet'])) {
+		$display_var='none';
+	}
+	else $display_var='';
+	if($tabelle!=null) {//überprüft ob die Veranstaltung überhaupt existiert.
 		$rueckgabe='
 		<tr>
 			<td></td>
 			<td colspan="4">
 				<!-- Anfang der Zeitfenster -->
-				<table class="thekendienst_zeitfenster" id="thekendienst_zeitfenster_'.$ID.'">					
+				<table class="thekendienst_zeitfenster" id="thekendienst_zeitfenster_'.$ID.'" style="display: '.$display_var.'">					
 					<tbody>
 						<tr class="headline">';
 		$rueckgabe.='<td>ID</td><td colspan="5">Zeitfenster</td>';
@@ -82,31 +91,30 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName, $editierbar=true)
 			$further_i=$i;
 			$i=$zeile['IDZeitfenster'];
 			if($further_i==$i) continue; //prüft ob die aufgerufene Zeile dem vorgänger entspricht (dann bedarf es keines neuen Eintrages) und startet ggf. mit der nächsten iteration von foreach.
-			if(is_admin()) $adminbearbeitenjavascript='(<a href="javascript:bearbeitenformularaufmachen(\'Zeitfenster_\',\''.$ID.'\',\''.$zeile['IDZeitfenster'].'\')">bearbeiten</a>) ';
+			if(is_admin()) $adminbearbeitenjavascript='<div id="loeschen_zeitfenster_'.$ID.'_'.$zeile['IDZeitfenster'].'_ausloeser">(<a href="javascript:bearbeitenformularaufmachen(\'Zeitfenster_\',\''.$ID.'\',\''.$zeile['IDZeitfenster'].'\')">bearbeiten</a>)<br/>(<a href="javascript:ein_ausklappen(\'loeschen_zeitfenster_\',\''.$ID.'_'.$zeile['IDZeitfenster'].'\',\'1\')">loeschen</a>) </div>';
 			else $adminbearbeitenjavascript='';
 			$rueckgabe.='
-						<tr id="Zeitfenster_'.$ID.'_'.$zeile['IDZeitfenster'].'">
-							<td>'.$zeile['IDZeitfenster'].'</td>
-							<td><!-- '.$zeile['Tag'].' -->'.date("l, j.n.Y", strtotime($zeile['Tag'])).'</td>
-							<td>'.$zeile['Startzeit'].'</td>
-							<td>'.$zeile['Endzeit'].'</td>
-							<td align="center">'.$zeile['AnzahlMitarbeiter']/*.'('.$Anzahlderschoneingetragenen.')'*/.'</td>
-							<td>'.$adminbearbeitenjavascript.$zeile['KommentarZeitfenster'].'</td>
+				<tr id="Zeitfenster_'.$ID.'_'.$zeile['IDZeitfenster'].'">
+					<td>'.$zeile['IDZeitfenster'].'</td>
+					<td><!-- '.$zeile['Tag'].' -->'.date("l, j.n.Y", strtotime($zeile['Tag'])).'</td>
+					<td>'.$zeile['Startzeit'].'</td>
+					<td>'.$zeile['Endzeit'].'</td>
+					<td align="center">'.$zeile['AnzahlMitarbeiter']/*.'('.$Anzahlderschoneingetragenen.')'*/.'</td>
+					<td>'.$adminbearbeitenjavascript.$zeile['KommentarZeitfenster'].'<div id="loeschen_zeitfenster_'.$ID.'_'.$zeile['IDZeitfenster'].'" style="display: none"><form action="" method="post" name="eintragen"><input type="submit" value="wirklich l&ouml;schen" name="zeitfenster_loeschen" ><input type="hidden" name="ID_Veranstaltung" value="'.$ID.'"><input type="hidden" name="ID_Zeitfenster" value="'.$zeile['IDZeitfenster'].'"><input type="hidden" name="AnzahlMitarbeiter" value="'.$zeile['AnzahlMitarbeiter'].'"></form></div></td>
 
-						</tr>';//Gibt das aktuell aufgerufene (eindeutige!) Zeitfenster aus
+				</tr>';//Gibt das aktuell aufgerufene (eindeutige!) Zeitfenster aus
 			$rueckgabe.=namensliste($ID, $zeile['IDZeitfenster'], $editierbar);//ruft das dazugehörige Feld der eingetragenen wieder.
 			if($zeile['IDZeitfenster']>=$hoechstezeitfensterID) {//ermittelt ob die aktuelle ID des aktuellen Zeitfelds höher ist als irgendein vorher aufgerufenes. wenn ja:
 				$hoechstezeitfensterID=$zeile['IDZeitfenster']; //wird der Zähler hochgesetzt
 				$letzterTag=$zeile['Tag']; //wird der letzte Tag hochgesetzt (für übergabe)
 				$letzteEndzeit=$zeile['Endzeit']; //wird die letzte Endzeit hochgesetzt. (für übergabe)
 			}
-			
 		}
 		if (is_admin()) { //überprüft ob der Betrachter angemeldet und berechtigt ist
 			$rueckgabe.='
 						<tr id="FormularZeitfenster_'.$ID.'">
 							<td colspan="6">';
-			$rueckgabe.=		neueszeitfensterformular($ID, $AufstellungsName, $hoechstezeitfensterID, $letzterTag="2011-01-01", $letzteEndzeit="00:00:00"); //baut formular für neue Zeitfenster auf (wird nur gezeigt wenn berechtigt) - übergibt relevante Daten
+			$rueckgabe.=		neueszeitfensterformular($ID, $AufstellungsName, $hoechstezeitfensterID, $letzterTag="2011-01-01", $letzteEndzeit); //baut formular für neue Zeitfenster auf (wird nur gezeigt wenn berechtigt) - übergibt relevante Daten
 			$rueckgabe.=	'</td>
 						</tr>';//ruft eine Funktion auf, die ein Formular aufmacht, welches hidden die Variable $ID und $AufstellungsName enthält und um die Einträge IDZEitfenster, Tag, Startzeit, endzeit ergänzt werden kann. Der Tag und die vorhergehende Endzeit sollte in der Startzeit per default auftauchen.
 		}
@@ -115,6 +123,21 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName, $editierbar=true)
 				</table>
 			</td>
 		</tr>';
+	}
+	elseif($tabelle2!=null) {//überprüft ob die Veranstaltung überhaupt existiert.
+		$rueckgabe='
+		<tr>
+		<td></td>
+		<td colspan="4">
+			<!-- Anfang der Zeitfenster -->
+			<table class="thekendienst_zeitfenster" id="thekendienst_zeitfenster_'.$ID.'">		
+				<tbody>
+				<tr><td>Diese Veranstaltung wurde gel&ouml;scht</td></tr>
+				</tbody
+			</table>
+		</td>
+		</tr>
+		';
 	}
 	else $rueckgabe='Fehler, die Veranstaltung in die du ein neues Zeitfenster integrieren wolltest, existiert nicht (mehr)'; //Wenn die Veranstaltung noch garnicht angelegt oder gelöscht wurde
 	return $rueckgabe;
@@ -164,8 +187,7 @@ function namensliste($IDAufstellung, $IDZeitfenster, $editierbar=false) {//gibt 
 														<input type="hidden" name="AufstellungsID" value="'.$IDAufstellung.'"/>
 														<input type="hidden" name="IDZeitfenster" value="'.$IDZeitfenster.'"/>';
 //Beginn des Aufklappmenüs aller Benutzer
-				$rueckgabe.='							
-														<select name="NameMitarbeiter" size="1" onchange="if(this.value==\'-Andere-\') {ein_ausklappen(\'NameMitarbeiterManuell_\',\''.$ID_Unique.'\', \'false\')} else {einklappen(\'NameMitarbeiterManuell_\',\''.$ID_Unique.'\', false)}">';
+				$rueckgabe.='							<select name="NameMitarbeiter" size="1" onchange="if(this.value==\'-Andere-\') {ein_ausklappen(\'NameMitarbeiterManuell_\',\''.$ID_Unique.'\', \'false\')} else {einklappen(\'NameMitarbeiterManuell_\',\''.$ID_Unique.'\', false)}">';
 				$sql_user='SELECT ID, user_login, display_name FROM '.$wpdb->users;
 				(array) $tabelle=$wpdb->get_results($sql_user, ARRAY_A);
 				foreach($tabelle as $zeile) {
@@ -197,7 +219,7 @@ function namensliste($IDAufstellung, $IDZeitfenster, $editierbar=false) {//gibt 
 											<td>'.$idM.'</td>
 											<td colspan="3" align="left">'.$zeile['NameMitarbeiter'].'</td>
 											<td>
-												<form action="'.$location.'" method="post" name="austragen'.$ID_Unique.'_'.$zeile['IDMitarbeiter'].'">
+												<form action="" method="post" name="austragen'.$ID_Unique.'_'.$zeile['IDMitarbeiter'].'">
 												<div id="Austragsfeld_'.$ID_Unique.'_'.$zeile['IDMitarbeiter'].'_ausloeser" style="display:">
 													<a href="javascript:ein_ausklappen(\'Austragsfeld_\',\''.$ID_Unique.'_'.$zeile['IDMitarbeiter'].'\',true)" id="eintragenknopf_'.$ID_Unique.'">austragen</a>
 												</div>
@@ -245,39 +267,53 @@ function ThekendienstAdminPanel() {
 
 function ThekendienstAdminFunktion() {//schalter der je nach Variableninhalt entscheidet was gemacht werden soll
 	if(isset($_POST['zeitfenstereintragen'])) zeitfenstereintragen("");
-	if(isset($_POST['zeitfensteraendern'])) zeitfensteraendern("");
+	elseif(isset($_POST['zeitfensteraendern'])) zeitfensteraendern("");
+	elseif(isset($_POST['zeitfenster_loeschen'])) zeitfensterloeschen("");
 	elseif(isset($_POST['neueveranstaltunggesetzt'])) neueveranstaltungeintragen("");
 	elseif(isset($_POST['eintragen'])) eintragenName("");
+	elseif(isset($_POST['austragen'])) austragenName("");
+	elseif(isset($_POST['veranstaltungloeschen'])) veranstaltungloeschen("");
+	elseif(isset($_POST['dauerhaft_ein_ausblenden'])) dauerhaft_ein_ausblenden("");
 	echo Tabellenanfang().AufstellungermittelnAdmin().Tabellenende();
 }
 
 function AufstellungermittelnAdmin() {//
-	global $wpdb;
+	global $wpdb, $user_ID;
 	global $table_prefix;
 	(string) $rueckgabe="";
-	$tabelle=$wpdb->get_results('SELECT AufstellungsID, AufstellungsName FROM '.$table_prefix.'thekendienst GROUP BY AufstellungsID ORDER BY AufstellungsID', ARRAY_A); //Holt alle vorhanden Einträge au der Datenbank
+	$tabelle=$wpdb->get_results('SELECT AufstellungsID, AufstellungsName, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE Archiv!="1" GROUP BY AufstellungsID ORDER BY AufstellungsID', ARRAY_A); //Holt alle vorhanden Einträge aus der Datenbank
 	if(is_array($tabelle)) {
 		$letzterEintrag=end($tabelle);
-		if($letzterEintrag["AufstellungsID"]!=count($tabelle)) {//überprüft (rudimentär) die Validität der Tabelle. Beide Arrays gleiche Anzahl von Elementen? Wenn nicht wird nachfolgende Fehlermeldung ausgegeben...
-			echo '<tr><td colspan="2">Fehler: Die Tabelle ist korrupt -> Support fragen (Aufstellungermitteln)</td></tr>'; 
-		}
-		else { //Tabelle ist (rudiementär) in Ordnung
-			foreach($tabelle as $zeile) {
-				//Geht das Veranstaltungsnamen-Array durch (ruft die Übersicht der Veranstaltungen auf)
-				$rueckgabe.='
-				<tr>
-					<td>'.$zeile["AufstellungsID"].'</td>
-					<td>'.$zeile["AufstellungsName"].'</td>
-					<td align="center" style="display: none" id="bearbeitenzurueck"><a href="" >zur&uuml;ck</a></td>
-					<td align="right">
-						<a href="javascript:ein_ausklappen(\'thekendienst_zeitfenster_\',\''.$zeile["AufstellungsID"].'\')">ein/ausblenden</a>
-					</td>
-				</tr>'; //Ausgabe der Veranstaltungsliste
-				$rueckgabe.= aufklappenListederZeitfenster($zeile["AufstellungsID"],  $zeile["AufstellungsName"]); //ruft die zur Veranstaltung gehörenden Zeitfenster auf.
-				}
+		foreach($tabelle as $zeile) {
+			//Geht das Veranstaltungsnamen-Array durch (ruft die Übersicht der Veranstaltungen auf)
+			//echo current_user_hat_es_ausgeblendet($user_ID, $zeile['Ausgeblendet']);
+			if(current_user_hat_es_ausgeblendet($user_ID, $zeile['Ausgeblendet'])===true) {
+				$aus_einblend_string="dauerhaft einblenden";
 			}
+			else $aus_einblend_string="dauerhaft ausblenden";
+			$rueckgabe.='
+			<tr>
+				<td>'.$zeile["AufstellungsID"].'</td>
+				<td>'.$zeile["AufstellungsName"].'</td>
+				<td align="center" id="bearbeitenzurueck">'.veranstaltungloeschen_formular($content="", $zeile["AufstellungsID"]).'</td>
+				<td align="right"><a href="javascript:veranstaltung_ein_ausklappen(\'dauerhaft_ein_ausblenden_form\',\''.$zeile["AufstellungsID"].'\',\'1\')" id="dauerhaft_ein_ausblenden_form'.$zeile["AufstellungsID"].'_ausloeser">'.$aus_einblend_string.'</a>
+					<form action="" name="dauerhaft_ein_ausblenden_form" method="post" id="dauerhaft_ein_ausblenden_form'.$zeile["AufstellungsID"].'">
+						<input type="hidden" value="ein_ausblenden'.$zeile["AufstellungsID"].'" name="dauerhaft_ein_ausblenden">
+						<input type="hidden" value="'.$user_ID.'" name="aktuellerbenutzer">
+						<input type="submit" name="dauerhaft_ein_ausblenden_button" value="dauerhaft ein/ausblenden" style="display: none;">
+					</form>
+				</td>
+				<td align="right">
+					<a href="javascript:ein_ausklappen(\'thekendienst_zeitfenster_\',\''.$zeile["AufstellungsID"].'\')">ein/ausblenden</a>
+				</td>
+			</tr>'; //Ausgabe der Veranstaltungsliste
+			$rueckgabe.= aufklappenListederZeitfenster($zeile["AufstellungsID"],  $zeile["AufstellungsName"]); //ruft die zur Veranstaltung gehörenden Zeitfenster auf.
+		}
 	}
-	return $rueckgabe.NeueVeranstaltungFormular($zeile["AufstellungsID"]); //Die rekursiv vorher aufgerufenen Elemente werden mit einem Formular zum eintragen weiterer Veranstaltungen(letzte VeranstaltungsID wird übergeben) zurückgegeben.
+	if(isset($zeile)) {
+		return $rueckgabe.NeueVeranstaltungFormular($zeile["AufstellungsID"]); //Die rekursiv vorher aufgerufenen Elemente werden mit einem Formular zum eintragen weiterer Veranstaltungen(letzte VeranstaltungsID wird übergeben) zurückgegeben.
+	}
+	else return $rueckgabe.NeueVeranstaltungFormular(0);
 }
 
 
@@ -286,7 +322,15 @@ Formulare zur Dateneingabe.
 *************************************************** */
 
 function NeueVeranstaltungFormular($letzteAufstellungsID) {//Baut ein Formular auf um neue Veranstaltungen zu erzeugen
-	$id=$letzteAufstellungsID+1; //berechnet die neue ID
+	global $wpdb, $table_prefix;
+	$hoechste_id=$wpdb->get_var('
+		SELECT DISTINCT AufstellungsID 
+		FROM '.$table_prefix.'thekendienst 
+		ORDER BY AufstellungsID 
+		DESC 
+		LIMIT 1
+		');
+	$id=$hoechste_id+1; //berechnet die neue ID
 	$rueckgabe='
 	<tr>
 		<td></td>
@@ -335,11 +379,11 @@ function neueszeitfensterformular($IDAufstellung, $IDAufstellungsName, $IDLetzte
 											<td>Kommentar</td>
 										</tr>
 										<tr>
-											<td><input type="text" size="10" maxlength="10" name="Tag" value="'.$defaulttag.'"/></td>
-											<td><input type="text" size="10" maxlength="8" name="Startzeit" value="'.$defaultstartzeit.'" /></td>
-											<td><input type="text" size="10" maxlength="8" name="Endzeit"  value="'.$defaultendzeit.'"/></td>
-											<td><input type="text" size="10" maxlength="2" name="AnzahlMitarbeiter" value="2"/></td>
-											<td><input type="text" size="10" maxlength="44" name="KommentarZeitfenster" value=""/></td>
+											<td><input type="text" size="13" maxlength="10" name="Tag" value="'.$defaulttag.'"/></td>
+											<td><input type="text" size="8" maxlength="8" name="Startzeit" value="'.$defaultstartzeit.'" /></td>
+											<td><input type="text" size="8" maxlength="8" name="Endzeit"  value="'.$defaultendzeit.'"/></td>
+											<td><input type="text" size="7" maxlength="2" name="AnzahlMitarbeiter" value="2"/></td>
+											<td><input type="text" size="13" maxlength="44" name="KommentarZeitfenster" value=""/></td>
 										</tr>
 										<tr>
 											<td>
@@ -360,7 +404,7 @@ function neueszeitfensterformular($IDAufstellung, $IDAufstellungsName, $IDLetzte
 Funktionen zur Dateneingabe.
 *************************************************** */
 
-function neueveranstaltungeintragen($content) {//Veranstaltung in Datenbank eintragen (aus formular) -  aufruf durch hook!
+function neueveranstaltungeintragen($content="") {//Veranstaltung in Datenbank eintragen (aus formular) -  aufruf durch hook!
 	global $wpdb, $table_prefix;
 	$zeile=$_POST;
 	if($zeile["AufstellungsName"]!="") {//Prüft ob Formular leer war
@@ -371,14 +415,30 @@ function neueveranstaltungeintragen($content) {//Veranstaltung in Datenbank eint
 				AufstellungsID="'.$zeile["AufstellungsID"].'" AND 
 				AufstellungsName="'.$zeile["AufstellungsName"].'"
 				)'; //Überprüfung ob ein Zeitfenster mit der gleichen ID (und anderem) existiert.
-		$sql='INSERT INTO '.$table_prefix.'thekendienst (AufstellungsID, AufstellungsName) VALUES ("'.$zeile["AufstellungsID"].'","'.$zeile["AufstellungsName"].'")'; 
+		$sql='
+			INSERT INTO '.$table_prefix.'thekendienst (AufstellungsID, AufstellungsName) 
+			VALUES ("'.$zeile["AufstellungsID"].'","'.$zeile["AufstellungsName"].'")'; 
+		$sql2='
+			UPDATE '.$table_prefix.'thekendienst 
+			SET Archiv="0",
+			AufstellungsID="'.$zeile["AufstellungsID"].'",
+			AufstellungsName="'.$zeile["AufstellungsName"].'",
+			AnzahlMitarbeiter=null
+			WHERE (
+				AufstellungsID="'.$zeile["AufstellungsID"].'" AND 
+				AufstellungsName="'.$zeile["AufstellungsName"].'"
+				)
+			';
 		//echo $sql;
 		//echo $sql_abfrage;
 		$Anzahl=$wpdb->query($sql_abfrage);
-		if($Anzahl<=1) {//Nur einer oder kein Eintrag da? dann:
+		if($Anzahl=1) {//Nur einer oder kein Eintrag da? dann:
 		  	$wpdb->query($sql);//Wenn einer vorhanden wird dieser aktualisiert (ergänzt)
 		  	//echo mysql_error();
-		} 
+		}
+		elseif($Anzahl=0) {
+			
+		}
 		elseif($Anzahl>1) {
 			echo str_replace('[Thekendienst='.$zeile["AufstellungsID"].']','Die Datenbank ist defekt -> Bitte Administrator/Support umgehend informieren', $content); //...Script wird abgebrochen
 			return NULL;
@@ -394,7 +454,7 @@ function neueveranstaltungeintragen($content) {//Veranstaltung in Datenbank eint
 }
 
 function zeitfenstereintragen($content) {//erstellt neue Zeitfenster
-	error_log("zeitfenstereintragen erreicht", 3, "/php_temp.log");
+	//error_log("zeitfenstereintragen erreicht", 3, "/php_temp.log");
 	$zeile=$_POST;
 	global $wpdb, $table_prefix;
 	if(
@@ -455,10 +515,8 @@ function zeitfenstereintragen($content) {//erstellt neue Zeitfenster
 }
 
 function zeitfensteraendern($content) {
-	error_log("zeitfensteraendern erreicht", 3, "php_temp.log");
+	//error_log("zeitfensteraendern erreicht", 3, "/php_temp.log");
 	$zeile=$_POST;
-	//echo 'arabesque';
-	//print_r($_POST);
 	global $wpdb, $table_prefix;
 		if(
 			check_time($zeile['Startzeit']) &&
@@ -466,14 +524,6 @@ function zeitfensteraendern($content) {
 			check_date($zeile['Tag'],"Ymd","-") &&
 			$zeile['AnzahlMitarbeiter']>0
 		) {	//überprüft (mittels Hilfsfunktionen unten) ob die eingegebenen Daten im richtigen Formar vorliegen. Wenn ja:
-			/*$sql_abfrage='
-				SELECT *
-				FROM '.$table_prefix.'thekendienst 
-				WHERE (
-					AufstellungsID="'.$zeile["AufstellungsID"].'" AND 
-					AufstellungsName="'.$zeile["AufstellungsName"].'" AND 
-					IDZeitfenster="'.$zeile["IDZeitfenster"].'"
-					)'; */ //Überprüfung ob ein Zeitfenster mit der gleichen ID (und anderem) existiert.
 			$sql='
 				UPDATE '.$table_prefix.'thekendienst 
 				SET IDZeitfenster="'.$zeile["IDZeitfenster"].'", 
@@ -485,7 +535,7 @@ function zeitfensteraendern($content) {
 				WHERE (AufstellungsID="'.$zeile["AufstellungsID"].'" AND 
 					AufstellungsName="'.$zeile["AufstellungsName"].'" AND 
 					IDZeitfenster="'.$zeile["IDZeitfenster"].'")
-				ORDER BY AufstellungsID, IDZeitfenster, IDMitarbeiter
+				ORDER BY ID ASC
 				'; //Aktualisiert vorhandene Zeilen der Datenbank
 			$sql2='
 				INSERT INTO '.$table_prefix.'thekendienst 
@@ -502,10 +552,9 @@ function zeitfensteraendern($content) {
 				WHERE (AufstellungsID="'.$zeile["AufstellungsID"].'" AND 
 					AufstellungsName="'.$zeile["AufstellungsName"].'" AND 
 					IDZeitfenster="'.$zeile["IDZeitfenster"].'")
-				ORDER BY AufstellungsID, IDZeitfenster, IDMitarbeiter DESC
+				ORDER BY ID DESC
 				LIMIT 1';
 			  	$wpdb->query($sql);//Wenn einer vorhanden wird dieser aktualisiert (ergänzt)
-			  	//print_r($wpdb);
 				for($count = mysql_affected_rows(); $count < $zeile['AnzahlMitarbeiter']; $count++){ //Schleife die so oft wie Helfer abzüglich bereits existierender Einträge wiederholt
 					$wpdb->query($sql2); //Trägt neue Zeilen in Datenbank ein (s.o.)
 				}
@@ -513,7 +562,6 @@ function zeitfensteraendern($content) {
 					$wpdb->query($sql3); //Löscht überflüssige Zeilen aus der Datenbank (s.o.)
 				}
 			unset($_POST);//Formulardaten werden gelöscht sofern nötig
-			//echo str_replace('[Thekendienst='.$zeile["AufstellungsID"].']', ThekendienstTabellenSchalter($content), $content); //ruft die ergänzte Tabelle wieder auf (Script startet von neu)
 			return $content;
 		}
 		else {//Die Daten sind im falschen Format
@@ -521,8 +569,106 @@ function zeitfensteraendern($content) {
 		};
 }
 
-function veranstaltungaendern() {
+function zeitfensterloeschen($content) {
+	global $wpdb, $table_prefix;
+	$i = $_POST["AnzahlMitarbeiter"]-1;
+	$sql='
+		DELETE FROM '.$table_prefix.'thekendienst 
+		WHERE (AufstellungsID="'.$_POST["ID_Veranstaltung"].'" AND IDZeitfenster="'.$_POST["ID_Zeitfenster"].'")
+		LIMIT '.$i;
+	$sql_archiv='UPDATE '.$table_prefix.'thekendienst SET Archiv="1", AnzahlMitarbeiter="0" WHERE (AufstellungsID="'.$_POST["ID_Veranstaltung"].'" AND IDZeitfenster="'.$_POST["ID_Zeitfenster"].'")';
+	$wpdb->query($sql);
+	$wpdb->query($sql_archiv);
+}
+
+function veranstaltungloeschen_formular($content,$id) {//Veranstaltung in Datenbank eintragen (aus formular) -  aufruf durch hook!
+	$rueckgabe = '
+		<form action="" method="post" name="loeschen'.$id.'">
+		<div id="Loeschen_'.$id.'_ausloeser" style="display:">
+			<a href="javascript:ein_ausklappen(\'Loeschen_\',\''.$id.'\',true)" id="loeschenknopf_'.$id.'">l&ouml;schen</a>
+		</div>
+		<div id="Loeschen_'.$id.'" style="display:none">
+			<input type="hidden" name="veranstaltungsid" value="'.$id.'">
+			<input type="submit" name="veranstaltungloeschen" value="wirklich l&ouml;schen">
+		</div>
+		</form>';
+	return $rueckgabe;
+	/*
 	
+	*/
+}
+
+function dauerhaft_ein_ausblenden() {
+	global $wpdb, $table_prefix;
+	$id=str_replace('ein_ausblenden','', $_POST['dauerhaft_ein_ausblenden']);
+	$sql_abfrage='
+		SELECT Ausgeblendet 
+		FROM '.$table_prefix.'thekendienst
+		WHERE AufstellungsID='.$id.'
+		';	
+	$liste=$wpdb->get_results($sql_abfrage, ARRAY_A);
+	$liste=array_unique($liste);
+	foreach($liste as $liste_einzeln) {
+		//print_r($liste_einzeln);
+		if(count($liste_einzeln)=="1" && !current_user_hat_es_ausgeblendet($_POST['aktuellerbenutzer'], $liste_einzeln['Ausgeblendet'])) {
+			$neuer_inhalt=$_POST['aktuellerbenutzer'].';'.$liste_einzeln['Ausgeblendet'];
+			$sql='
+				UPDATE '.$table_prefix.'thekendienst
+				SET Ausgeblendet="'.$neuer_inhalt.'"
+				WHERE AufstellungsID="'.str_replace('ein_ausblenden','',$_POST['dauerhaft_ein_ausblenden']).'"';
+			$wpdb->query($sql);
+		}
+		elseif(count($liste_einzeln)=="1" && current_user_hat_es_ausgeblendet($_POST['aktuellerbenutzer'], $liste_einzeln['Ausgeblendet'])) {
+			$neuer_inhalt=explode(";",$liste_einzeln['Ausgeblendet']);
+			foreach($neuer_inhalt as $key => $user) {
+				if($user==$_POST['aktuellerbenutzer']) {
+					unset($neuer_inhalt[$key]);
+				}
+			}
+			$neuer_inhalt=implode(';', $neuer_inhalt);
+			$sql='
+				UPDATE '.$table_prefix.'thekendienst
+				SET Ausgeblendet="'.$neuer_inhalt.'"
+				WHERE AufstellungsID="'.str_replace('ein_ausblenden','',$_POST['dauerhaft_ein_ausblenden']).'"';
+			$wpdb->query($sql);
+		}
+		else echo "Datenbank kaputt -> support fragen! (function: dauerhaft_ein_ausblenden())";
+		echo mysql_error();
+	}
+}
+
+function current_user_hat_es_ausgeblendet($user_id, $Ausgeblendet_String) {
+	$Ausgeblendet_Strings=explode(";",$Ausgeblendet_String);
+	foreach($Ausgeblendet_Strings as $ausblend_id) {
+		if($ausblend_id==$user_id) return true;
+	}
+	return false;
+}
+
+
+function veranstaltungloeschen($content) {
+	//error_log("verantaltungloeschen_final erreicht/n", 3, "/php_temp.log");
+	global $wpdb, $table_prefix;
+	$sql_anzahleintraege='
+		SELECT * FROM '.$table_prefix.'thekendienst 
+		WHERE AufstellungsID="'.$_POST["veranstaltungsid"].'"
+		';
+	$anzahleintraege=$wpdb->query($sql_anzahleintraege);
+	if($anzahleintraege>0) {
+		$i=$anzahleintraege-1;
+		$sql='
+			DELETE FROM '.$table_prefix.'thekendienst 
+			WHERE AufstellungsID="'.$_POST["veranstaltungsid"].'"
+			LIMIT '.$i;
+		$wpdb->query($sql);
+		$sql2='
+			UPDATE '.$table_prefix.'thekendienst 
+			SET Archiv="1", AnzahlMitarbeiter="0"
+			WHERE AufstellungsID="'.$_POST["veranstaltungsid"].'"';
+		$wpdb->query($sql2);
+	}
+	else echo "an error occured";
+	return $content.mysql_error().'blub';
 }
 
 function eintragenName($content) {
@@ -531,7 +677,6 @@ function eintragenName($content) {
 	$sql='SELECT ID FROM '.$wpdb->users.' WHERE user_login=\''.$zeile["NameMitarbeiter"].'\'';
 	//echo $sql;
 	$idfromDB=$wpdb->get_row($sql, ARRAY_A);
-	//print_r($idfromDB);
 	if($zeile["NameMitarbeiter"]!=null ) {
 		if($zeile["NameMitarbeiter"]=='-Andere-') {
 			$zeile["NameMitarbeiter"]=$zeile["NameMitarbeiterManuell"];
@@ -547,11 +692,9 @@ function eintragenName($content) {
 				AufstellungsID="'.$zeile["AufstellungsID"].'" AND 
 				IDZeitfenster="'.$zeile["IDZeitfenster"].'" AND
 				IDMitarbeiter IS NULL)
-			ORDER BY AufstellungsID, IDZeitfenster, IDMitarbeiter
+			ORDER BY ID, AufstellungsID, IDZeitfenster, IDMitarbeiter ASC
 			LIMIT 1'; //Aktualisiert vorhandene Zeilen der Datenbank
 		$output=$wpdb->query($sql);
-		//print_r($output);
-		//echo $sql;
 		echo mysql_error();
 		if(mysql_affected_rows()==0) {
 		echo 'Fehler: Entweder ist im Zeitfenster kein Platz mehr frei, oder das Zeitfenster existiert nicht, oder die Veranstaltung gibt es nicht. Es wurde kein Name vergeben (eintragenName)';
@@ -582,7 +725,6 @@ function austragenName($content) {
 		LIMIT 1'; //Aktualisiert vorhandene Zeilen der Datenbank
 	//echo $sql.'<br>';
 	$output=$wpdb->query($sql);
-	//print_r($output);
 	echo mysql_error();
 	if(mysql_affected_rows()==0) {
 		echo 'Fehler: Der Benutzer, die Veranstaltung oder das Zeitfenster konnte nicht gefunden werden. Evtl. wurde es zwischenzeitlich gelöscht. (Funktion: austragenName() )';
@@ -602,7 +744,7 @@ function Tabellenanfang() {
 	<table class="thekendienst_main" id="thekendienst_main"><tbody>
 		<tr class="headline">
 			<td>ID</td>
-			<td colspan="3">Veranstaltung</td>
+			<td colspan="4">Veranstaltung</td>
 		</tr>';
 }
 
