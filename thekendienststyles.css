@@ -1,5 +1,9 @@
 /* @override http://localhost:8888/Thekendienste/wp-content/plugins/thekendienst/thekendienststyles.css */
 
+table.thekendienst td {
+	text-align: middle;
+	vertical-align: middle;
+}
 table.thekendienst_main {
 	background: white;
 	width: 450px;
