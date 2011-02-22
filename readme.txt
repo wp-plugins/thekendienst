@@ -6,7 +6,7 @@ Requires at least: 2.8
 Tested up to: 3.0.5
 Stable tag: 0.2Beta
 
-This Plugin helps to create and organize shift schedules. You can create events by time frames and fill those time frames with a predefined number of persons on duty.
+This Plugin helps to create and organize shift schedules. You can create events by time frames and fill those with persons on duty.
 == Description ==
 
 (english)
