@@ -1,15 +1,15 @@
 <?php
 /*
 Plugin Name: Thekendienst
-Plugin URI: none
+Plugin URI: http://thekendienstplugin.derdateienhafen.de/
 Description: Plugin zum Verwalten von Diensten
 Author: Janne Jakob Fleischer
-Version: 0.0.3
+Version: 0.0.5b
 License: GPL
 Author URI: none
 Update Server: none
-Min WP version: 2.9.1
-Max WP Version: 2.9.2
+Min WP version: 3.0.5
+Max WP Version: 3.0.5
 */
 
 
@@ -46,6 +46,7 @@ function Datenbankanlegen() {//Sollte keine Tabelle vorliegen, wird eine erzeugt
 	//die('so_on');
    global $wpdb, $table_prefix;
    global $thekendienst_db_version;
+   $rueckgabe=null;
    $table_name = $table_prefix."thekendienst";
 	//$rueckgabe=$wpdb->get_var("SHOW TABLES LIKE '".$table_name."'");
    if($wpdb->get_var("SHOW TABLES LIKE '".$table_name."'") != $table_name) { //überprüft ob die Tabelle noch nicht existiert
