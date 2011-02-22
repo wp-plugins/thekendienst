@@ -60,6 +60,8 @@ In der Regel kann ich keinen support leisten, einen Versuch kann aber jeder inte
 
 == Screenshots ==
 
+(not yet ready)
+
 == Changelog ==
 
 = 0.2beta =
@@ -95,5 +97,7 @@ Dies kann hilfreichsein für “Aufbau” und “Abbau”, für “Weißes Hemd 
 
 == Upgrade Notice ==
 
+= 0.2beta =
+Erste Version die es lohnt auszuprobieren. Wichtigste Funktionen sind endlich implementiert
 
 == Arbitrary section ==
