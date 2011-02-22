@@ -10,42 +10,43 @@ This Plugin helps to create and organize shift schedules. You can create events 
 == Description ==
 
 (english)
-This Plugin helps to create and organize shift schedules. Within the plugin you can create events, seperated by time frames and fill those time frames with a predefined number of persons on duty. (english isn't easy for me, sorry)
+This Plugin helps to create and organize shift schedules. Within this plugin you can create events, seperated by time frames and fill those time frames with a predefined number of persons on duty. (english isn't easy for me, sorry)
 
-This plugin isn't ready for international usage. This Plugin is my first php code I wrote by myself and because I was learning by doing it the further circumstances had to be es simplified as possible. All code is commented in german and even all functions and vaariables are named that way. German is my native tongue. I intend to translate all of it sometime and enable gettext capabilities but it takes time, which I don't have right now. So you have to understand german to understand the documentary of this plugin below or just figure out how this plugin works by yourself. Sorry for this. I wrote all this german stuff down below in half the time It took my to produce this crippled paragraph in english.
+This plugin should only be used by skilled users because its a work in progress-plugin. And sometimes progress is even stalled for some time.
 
-basic stuff: Configure Thekendienst on the backend of Wordpress as an admin: Preferences -> Thekendienst. Show the schedule of an Event while using  &#91;Thekendienst=1&#93; in the content-section of a post or page. All Stuff the Thekendienst-Plugin is doing is only be done in the a seperated table called wp_thekendienst (or equal). So remove this Table wehen you dont want to use Thekendienst anymore. Also there is an option-entry set in wp_options (or equal) you should delete the entry where option_name=thekendienst_db_version.
+This plugin isn't ready for international use. This Plugin is the first php code I wrote by myself. At the time all code is commented in german and also all functions and variables are named that way. I intend to translate all of it sometime and enable gettext capabilities but it takes time, which I don't have right now. So you have to understand german to understand the documentary of this plugin below or just figure out how this plugin works by yourself. Sorry for this. I wrote all this german stuff down below in half the time It took my to produce this crippled paragraph in english.
 
-Requires enabled JavaScript. I think it do not work on Internet Explorer. Don't have Windows, can't try.
+Basic stuff: Configure Thekendienst on the backend of Wordpress as an admin: Preferences/Properties? -> Thekendienst. Show the schedule of an Event by using  &#91;Thekendienst=1&#93; in the content-section of a post or page. All Stuff the Thekendienst-Plugin is doing is only be done in a seperated table called wp_thekendienst (or equal). So remove this Table when you dont want to use Thekendienst anymore. Additionally there is an option-entry set in wp_options (or equal) you could delete if you like to get rid of all this plugin entirely: Search for  option_name=thekendienst_db_version in your sql database.
+
+This Plugin requires enabled JavaScript. And I think it do not work on Internet Explorer, but I don't have Windows so I can't try.
 
 (German)
 Dieses Plugin dient der einfachen Einteilung und Veröffentlichung von “Thekendiensten” bei verschiedenen Veranstaltungen. Unterschiedliche Veranstaltungen werden in Zeiträume unterteilt und können mit Mitarbeitern gefüllt werden.
 
-Ich bin kein programmierer und dieses plugin ist das erste php-Script das ich produktiv einsetze und damit auch veröffentliche. Profis werden über den Code lachen.
+Ich bin kein Programmierer und dieses plugin ist das erste php-Script das ich produktiv einsetze und damit auch veröffentliche. Profis werden über den Code lachen.
 
 Die Erstellung und Bearbeitung der Veranstaltungen erfolgt z. Zt. nur durch die Administratoren. Das Eintragen der Mitarbeiter erfolgt jedoch durch jeden (angemeldeten) Benutzer des Blogs. 
 
-Daraus ergibt sich schon: Sicherheitsbedenken haben auf die Entwicklung dieses Scripts keinerlei Einfluss gehabt. Ich verwende es auch ausschließlich in einem "Members only"-Blog in dem jeder angemeldete (Anmeldung nur durch Admin) schreiben, lesen und (in Grenzen) administrieren kann. Externe Kommentare (und damit weitere Accounts über die der Editoren hinaus) sind nicht vorgesehen. Würden sie das, wäre das Aufklappmenü beim Eintragen in die dienste ungleich länger (vgl. <a href="http://www.derdateienhafen.de/thekendienstplugin">DEMO</a>). Ich kann mir aber vorstellen dass dieses Plugin auch in einem öffentlichen Blog anwendung finden kann, wenn man es lediglich auf einer passwortgeschützten Seite (oder Beitrag) einsetzt. Ich habe das nicht ausprobiert.
+Daraus ergibt sich schon: Sicherheitsbedenken haben auf die Entwicklung dieses Scripts keinerlei Einfluss gehabt. Ich verwende es auch ausschließlich in einem "Members only"-Blog in dem jeder angemeldete (Anmeldung nur durch Admin) schreiben, lesen und (in Grenzen) administrieren kann. Externe Kommentare (und damit weitere Accounts über die der Editoren hinaus) sind nicht vorgesehen. Würden sie das, wäre das Aufklappmenü beim Eintragen in die dienste ungleich länger (vgl. <a href="http://www.derdateienhafen.de/thekendienstplugin">DEMO</a>). Ich kann mir aber vorstellen dass dieses Plugin auch in einem öffentlichen Blog Anwendung finden kann, wenn man es lediglich auf einer passwortgeschützten Seite (oder Beitrag) einsetzt. Ich habe das nicht ausprobiert.
 
-Ich garantiere kein bisschen support. 
+Ich garantiere kein bisschen support. Jegliche Verwendung erfolgt auf eigene Gefahr. Wer sich daran wagt sollte es erst in eimem Testsystem ausprobieren und dazu in der lage sein, php/mysql zu debuggen. Wer des deutschen mächtig ist, kann durch die klare Benennung der Funktionen und Variablen recht leicht in den Code finden. Wirklich schwirig ist das alles nicht, höchstens chaotisch.
 
-Wer sich daran wagt sollte es erst in eimem Testsystem ausprobieren und dazu in der lage sein, php/mysql zu debuggen. Wer des deutschen mächtig ist, kann durch die klare Benennung der Funktionen und Variablen recht leicht in den Code finden. Wirklich schwirig ist das alles nicht, höchstens chaotisch.
-
-JavaScript wird benötigt, auf dem Internet Explorer ist das Plugin vermutlich nicht zu administrieren.
+JavaScript wird benötigt, und im Internet Explorer ist das Plugin vermutlich nicht zu administrieren. Ich habe hier kein Windows, kann das also nicht testen.
 
 Zu den eigentlichen Funktionen:
 
 Das Plugin stellt folgende Funktionen zur Verfügung:
-Im backend unter Einstellungen -> Thekendienst die Veranstaltungen und Zeitfenster angelegt.
-Veranstaltungen beinhalten einen Titel und eine automatisch vergebene ID. Veranstaltungen können gelöscht und ausgeblendet (temporär und dauerhaft) werden.
-Zeitfenster beinhalten die Informationen des Tages, Start- und Endzeit, die Anzahl der Personen die sich eintragen können und ein Kommentarfeld. zeitfenster können gelöscht und bearbeitet werden.
-In jedem Zeitfenster können sich soviele Mitarbeiter eintragen wie das vorher definiert wurde. Beim Druck auf den Knopf "eintragen" zeigt sich ein Aufklappmenü mit allen Accounts des Worpress-Systems, außerdem der Eintrag "-Andere-" über den externe ebenfalls eingetragen werden können. Austragen funktioniert ebenso einfach. Die Liste der Mitarbeiter kann auch temporär ausgeblendet werden, ist aber in der Regel niemals nötig)
+Im backend unter Einstellungen -> Thekendienst werden die Veranstaltungen und Zeitfenster angelegt.
+<strong>Veranstaltungen<strong> beinhalten einen Titel und eine automatisch vergebene ID. Veranstaltungen können gelöscht und ausgeblendet (temporär und dauerhaft) werden.
+<strong>Zeitfenster<strong> beinhalten die Informationen des Tages, Start- und Endzeit, die Anzahl der Personen die sich eintragen können und ein Kommentarfeld. zeitfenster können gelöscht und bearbeitet werden.
+In jedem Zeitfenster können sich soviele <strong>Mitarbeiter<strong> eintragen wie das vorher definiert wurde. Beim Druck auf den Knopf "eintragen" zeigt sich ein Aufklappmenü mit allen Accounts des Worpress-Systems, außerdem der Eintrag "-Andere-" über den externe ebenfalls eingetragen werden können. Austragen funktioniert ebenso einfach. Die Liste der Mitarbeiter kann auch temporär ausgeblendet werden, ist aber in der Regel niemals nötig)
 
-Durch die Zeichenfolge &#91;Thekendienst=1&#93; im content wird die Veranstaltung mit der ID 1 aufgerufen. Gibt es eine veranstaltung mit dem Titel "Welteroberung" wird diese mit &#91;Thekendienst=Welteroberung&#93; angezeigt.
+Durch die Zeichenfolge &#91;Thekendienst=1&#93; im content wird die Veranstaltung mit der ID 1 aufgerufen. Gibt es eine Veranstaltung mit dem Titel "Welteroberung" wird diese mit &#91;Thekendienst=Welteroberung&#93; angezeigt.
 
 
 == Installation ==
 
+(german)
 Die Installation erfolgt wie üblich bei allen Plugins. Eine eigene Tabelle in der Datenbank sollte bei der aktivierung des plugins automatisch angelegt werden.
 d.h.: Die zip-Datei herunterladen und entpacken. Den hoffentlich entstehenden Ordner thekendienst mit allen Inhalten in den Ordner wp-content/plugins laden und im Wordpress-Backend unter Plugins aktivieren.
 
@@ -53,6 +54,12 @@ Deinstalliert werden kann das ganze in dem der Ordner thekendienst gelöscht wir
 
 == Frequently Asked Questions ==
 
+(english)
+= Where can I get support and ask questions? =
+
+Normally I can not guarantee any support, but you can try anyway: Post a comment on the <a href="http://www.derdateienhafen.de/thekendienstplugin">plugin homepage</a> and I see what I can do.
+
+(german)
 = Wo erhalte ich support und kann fragen stellen? =
 
 In der Regel kann ich keinen support leisten, einen Versuch kann aber jeder interessierte dennoch wagen: Einfach unter <a href="http://www.derdateienhafen.de/thekendienstplugin">pluginhomepage</a> einen Kommentar hinterlassen. Ich schaue dann was ich tun kann.
@@ -63,6 +70,7 @@ In der Regel kann ich keinen support leisten, einen Versuch kann aber jeder inte
 
 == Changelog ==
 
+(german)
 = 0.2beta =
 * Hier nun die nächste Version in der Admins nun Veranstaltungen dauerhaft(!) zuklappen können. Das ist zwar nicht besonders serverfreundlich programmiert (weil vgl. oft auf die Datenbank zugegriffen wird), funktioniert aber.
 * Durch diese Funktion ist das plugin jetzt definitiv nicht mehr ohne javascript nutzbar. Es gäbe sicher eine Lösung dafür, aber dazu müsste ich vermutlich noch in die nervige (!) html-tabellenstruktur eingreifen. Da hab ich jetzt nicht den Nerv drauf.
