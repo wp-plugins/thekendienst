@@ -9,8 +9,6 @@ Schalten zu welcher Funktion es gehen soll.
 
 if(isset($_POST['eintragen'])) add_filter('the_content','eintragenName');
 elseif(isset($_POST['austragen'])) add_filter('the_content','austragenName');
-//elseif(isset($_POST['zeitfenstereintragen'])) add_filter('the_content', 'zeitfenstereintragen');
-//elseif(isset($_POST['neueveranstaltunggesetzt'])) add_filter('the_content','neueveranstaltungeintragen');
 add_filter('the_content', 'ThekendienstTabellenSchalter');
 
 /* *************************************************** 
@@ -30,7 +28,7 @@ function ThekendienstTabellenSchalter($content) {
 				$content=str_replace($replacestring1, Aufstellunganzeigen($zeile['AufstellungsName'], $zeile['AufstellungsID']), $content);
 			}
 			elseif(strpos($content, $replacestring2)) {
-				$content=str_replace($replacestring2, Aufstellunganzeigen($zeile['AufstellungsName'], $zeile[AufstellungsID]),$content);
+				$content=str_replace($replacestring2, Aufstellunganzeigen($zeile['AufstellungsName'], $zeile['AufstellungsID']),$content);
 			}
 		}
 	}
@@ -47,7 +45,7 @@ function Aufstellunganzeigen($veranstaltungsname,$id){
 			<td>'.$veranstaltungsname.'</td>
 			<td></td>
 			<td align="right">
-				<a href="javascript:ein_ausklappen(\'thekendienst_zeitfenster_\',\''.$id.'\')">ein/ausblenden</a>
+				<a href="javascript:ein_ausklappen(\'thekendienst_zeitfenster_\',\''.$id.'\')">'.__('ein/ausblenden').'</a>
 			</td>
 		</tr>';
 	return Tabellenanfang().$tabellenmitte.aufklappenListederZeitfenster($id, $veranstaltungsname).Tabellenende();
@@ -75,15 +73,15 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName, $editierbar=true)
 				<table class="thekendienst_zeitfenster" id="thekendienst_zeitfenster_'.$ID.'" style="display: '.$display_var.'">					
 					<tbody>
 						<tr class="headline">';
-		$rueckgabe.='<td>ID</td><td colspan="5">Zeitfenster</td>';
+		$rueckgabe.='<td>ID</td><td colspan="5">'.__('Zeitfenster').'</td>';
 		$rueckgabe.='	</tr>
 						<tr class="headline">
 							<td>&nbsp;</td>
-							<td>Tag</td>
-							<td>Startzeit</td>
-							<td>Endzeit</td>
-							<td style="text-align: center;">Anzahl der <br/>Mitarbeiter</td>
-							<td>Kommentar</td>
+							<td>'.__('Tag').'</td>
+							<td>'.__('Startzeit').'</td>
+							<td>'.__('Endzeit').'</td>
+							<td style="text-align: center;">'.__('Anzahl der').'<br/>'.__('Mitarbeiter').'</td>
+							<td>'.__('Kommentar').'</td>
 						</tr>'; //Die Kopfzeile der Zeitfenster wird generiert.
 		$i=$i++;
 		$hoechstezeitfensterID=0;
@@ -129,7 +127,7 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName, $editierbar=true)
 		<tr>
 		<td></td>
 		<td colspan="4">
-			<!-- Anfang der Zeitfenster -->
+			<!-- '.__('Anfang der Zeitfenster').' -->
 			<table class="thekendienst_zeitfenster" id="thekendienst_zeitfenster_'.$ID.'">		
 				<tbody>
 				<tr><td>Diese Veranstaltung wurde gel&ouml;scht</td></tr>
@@ -155,8 +153,7 @@ function namensliste($IDAufstellung, $IDZeitfenster, $editierbar=false) {//gibt 
 						<tr>
 							<td></td>';
 		$rueckgabe.=' <td>
-								<a href="javascript:ein_ausklappen(\'thekendienst_namen_\',\''.$IDAufstellung.'_'.$IDZeitfenster.'\')">
-									(verbergen)
+								<a href="javascript:ein_ausklappen(\'thekendienst_namen_\',\''.$IDAufstellung.'_'.$IDZeitfenster.'\')">'.__('(verbergen)').'
 								</a>
 							</td>'; //Erzeugt einen durch Javascript realisierten Einklapp-Knopf
 		$rueckgabe.='	<td colspan="4">
@@ -164,7 +161,7 @@ function namensliste($IDAufstellung, $IDZeitfenster, $editierbar=false) {//gibt 
 									<tbody>
 										<tr class="headline">
 											<td class="thekendienst_ID">ID</td>
-											<td colspan="3" class="thekendienst_namen_ueberschrift" align="left">Name</td>
+											<td colspan="3" class="thekendienst_namen_ueberschrift" align="left">'.__('Name').'</td>
 											<td>
 											</td>
 										</tr>'; //Gibt fir Überschrift der Personenliste 
@@ -173,9 +170,9 @@ function namensliste($IDAufstellung, $IDZeitfenster, $editierbar=false) {//gibt 
 			if($zeile['IDMitarbeiter']==0 || $zeile['IDMitarbeiter']==null) {//Prüft ob ein Mitarbeiter eingetragen ist. Wenn nicht:
 				$rueckgabe.='			<tr>
 											<td></td>
-											<td colspan="2" align="left">-noch Platz-</td>
+											<td colspan="2" align="left">'.__('-noch Platz-').'</td>
 											<td></td>
-											<td><a href="javascript:ein_ausklappen(\'Eintragfeld_\',\''.$ID_Unique.'\',true)" id="Eintragfeld_'.$ID_Unique.'_ausloeser">eintragen</a></td>
+											<td><a href="javascript:ein_ausklappen(\'Eintragfeld_\',\''.$ID_Unique.'\',true)" id="Eintragfeld_'.$ID_Unique.'_ausloeser">'.__('eintragen').'</a></td>
 											<td></td>
 										</tr>
 										<tr id="Eintragfeld_'.$ID_Unique.'" style="display:none">
@@ -196,7 +193,7 @@ function namensliste($IDAufstellung, $IDZeitfenster, $editierbar=false) {//gibt 
 					else $rueckgabe.='
 															<option>'.$zeile['user_login'].'</option>';
 				}
-				$rueckgabe.='								<option>-Andere-</option>';
+				$rueckgabe.='								<option>'.__('-Andere-').'</option>';
 				$rueckgabe.='							</select>
 														<input type="hidden" name="IDMitarbeiter" value=""/>
 														<input type="text" size="20" maxlength="40" name= "NameMitarbeiterManuell" id="NameMitarbeiterManuell_'.$ID_Unique.'" value="" style="display:none"/>
@@ -221,7 +218,7 @@ function namensliste($IDAufstellung, $IDZeitfenster, $editierbar=false) {//gibt 
 											<td>
 												<form action="" method="post" name="austragen'.$ID_Unique.'_'.$zeile['IDMitarbeiter'].'">
 												<div id="Austragsfeld_'.$ID_Unique.'_'.$zeile['IDMitarbeiter'].'_ausloeser" style="display:">
-													<a href="javascript:ein_ausklappen(\'Austragsfeld_\',\''.$ID_Unique.'_'.$zeile['IDMitarbeiter'].'\',true)" id="eintragenknopf_'.$ID_Unique.'">austragen</a>
+													<a href="javascript:ein_ausklappen(\'Austragsfeld_\',\''.$ID_Unique.'_'.$zeile['IDMitarbeiter'].'\',true)" id="eintragenknopf_'.$ID_Unique.'">'.__('austragen').'</a>
 												</div>
 												<div id="Austragsfeld_'.$ID_Unique.'_'.$zeile['IDMitarbeiter'].'" style="display:none">
 													<input type="hidden" name="AufstellungsIDAustragen" value="'.$IDAufstellung.'"/>
@@ -249,11 +246,11 @@ function namensliste($IDAufstellung, $IDZeitfenster, $editierbar=false) {//gibt 
 		$rueckgabe.="
 						<tr>
 							<td></td>
-							<td><!--Namensfeld für weitere Person--></td>
-							<td><!--Knopf für weitere Personen--></td>
+							<td><!--".__('Namesfeld fŸr weitere Personen')."--></td>
+							<td><!--".__('Knopf fŸr weitere Personen')."--></td>
 						</tr>"; //Namensfeld per Dafault mit Angemeldetem Benutzer gefüllt. Überprüfung: Wenn das Namensfeld mit dem angemeldeten übereinstimmt Funktion aufrufen die den angemeldeten einträgt. Ist dem nicht so, name mit bekannten Nutzern überprüfen, falls vorhanden, nachfragen und für die ID eintragen. Falls nicht: ID für neue Person erzeugen(tricky!) und eintragen.
 	}
-	else $rueckgabe="Fehler, das Zeitfenster und/oder die Veranstaltung existiert nicht(mehr) = Irgendwer hat an der Datenbank was kaputt gemacht";
+	else $rueckgabe=__('Fehler, das Zeitfenster und/oder die Veranstaltung existiert nicht(mehr) = Irgendwer hat an der Datenbank was kaputt gemacht');
 	return $rueckgabe;
 }
 
@@ -300,11 +297,11 @@ function AufstellungermittelnAdmin() {//
 					<form action="" name="dauerhaft_ein_ausblenden_form" method="post" id="dauerhaft_ein_ausblenden_form'.$zeile["AufstellungsID"].'">
 						<input type="hidden" value="ein_ausblenden'.$zeile["AufstellungsID"].'" name="dauerhaft_ein_ausblenden">
 						<input type="hidden" value="'.$user_ID.'" name="aktuellerbenutzer">
-						<input type="submit" name="dauerhaft_ein_ausblenden_button" value="dauerhaft ein/ausblenden" style="display: none;">
+						<input type="submit" name="dauerhaft_ein_ausblenden_button" value="'.__('dauerhaft ein/ausblenden').'" style="display: none;">
 					</form>
 				</td>
 				<td align="right">
-					<a href="javascript:ein_ausklappen(\'thekendienst_zeitfenster_\',\''.$zeile["AufstellungsID"].'\')">ein/ausblenden</a>
+					<a href="javascript:ein_ausklappen(\'thekendienst_zeitfenster_\',\''.$zeile["AufstellungsID"].'\')">'.__('ein/ausblenden').'</a>
 				</td>
 			</tr>'; //Ausgabe der Veranstaltungsliste
 			$rueckgabe.= aufklappenListederZeitfenster($zeile["AufstellungsID"],  $zeile["AufstellungsName"]); //ruft die zur Veranstaltung gehörenden Zeitfenster auf.
@@ -340,7 +337,7 @@ function NeueVeranstaltungFormular($letzteAufstellungsID) {//Baut ein Formular a
 				<table class="thekendienst_main" id="thekendienst_main_NeueVeranstaltung">';
 	$rueckgabe.='
 					<tr class="headline">
-						<td colspan="4">Neue Veranstaltung eintragen</td>
+						<td colspan="4">'.__('Neue Veranstaltung eintragen').'</td>
 					</tr>';
 	$rueckgabe.='
 					<tr>
@@ -351,7 +348,7 @@ function NeueVeranstaltungFormular($letzteAufstellungsID) {//Baut ein Formular a
 							<input type="text" name="AufstellungsName" size="45" maxlength="50"/>
 						</td>
 						<td align="right">
-							<input type="submit" name="neueveranstaltunggesetzt" value="erstellen"/>
+							<input type="submit" name="neueveranstaltunggesetzt" value="'.__('erstellen').'"/>
 						</td>
 					</tr>
 				</table>
@@ -369,14 +366,14 @@ function neueszeitfensterformular($IDAufstellung, $IDAufstellungsName, $IDLetzte
 	$rueckgabe='
 								<form action="" method="post">
 									<table class="thekendienst_namen" id="thekendienst_namen_'.$IDAufstellung.'_'.$IDZeitfenster.'">
-										<tr><td colspan="5" align="left" id="ueberschriftformular"><strong>Neues Zeitfenster erzeugen</strong></td></tr>
+										<tr><td colspan="5" align="left" id="ueberschriftformular"><strong>'.__('Neues zeitfenster erzeugen').'</strong></td></tr>
 										<tr>
-											<td>Tag</td>
+											<td>'.__('Tag').'</td>
 
-											<td>Startzeit</td>
-											<td>Endzeit</td>
-											<td>Anzahl der<br/>Mithelfer</td>
-											<td>Kommentar</td>
+											<td>'.__('Startzeit').'</td>
+											<td>'.__('Endzeit').'</td>
+											<td>'.__('Anzahl der ').'<br/>'.__('Mitarbeiter').'</td>
+											<td>'.__('Kommentar').'</td>
 										</tr>
 										<tr>
 											<td><input type="text" size="13" maxlength="10" name="Tag" value="'.$defaulttag.'"/></td>
@@ -392,7 +389,7 @@ function neueszeitfensterformular($IDAufstellung, $IDAufstellungsName, $IDLetzte
 												<input type="hidden" name="IDZeitfenster" value="'.$IDZeitfenster.'"/>
 											</td>
 											<td colspan="4" align="right">
-												<input type="submit" value="eintragen" name="zeitfenstereintragen"/>
+												<input type="submit" value="'.__('eintragen').'" name="zeitfenstereintragen"/>
 											</td>
 										</tr>
 									</table>

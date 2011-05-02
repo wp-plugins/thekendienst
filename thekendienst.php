@@ -4,7 +4,7 @@ Plugin Name: Thekendienst
 Plugin URI: http://thekendienstplugin.derdateienhafen.de/
 Description: Plugin zum Verwalten von Diensten
 Author: Janne Jakob Fleischer
-Version: 0.2beta
+Version: 0.3alpha
 License: GPL
 Author URI: none
 Update Server: none
@@ -72,12 +72,10 @@ function Datenbankanlegen() {//Sollte keine Tabelle vorliegen, wird eine erzeugt
 		return $rueckgabe.mysql_error().'<br><strong>Die Datenbank wurde erfolgreich NEU angelegt</strong><br>';
    }
    elseif($current_db_version=='0.1' OR $current_db_version=='0.2' OR $current_db_version=='0.3') {
-   		//$rueckgabe.= get_option('thekendienst_db_version', null);
-   		//$sql = 'ALTER TABLE '.$table_name.' ADD COLUMN {KommentarZeitfenster varchar(45)};';
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php'); //emröglicht Zugriff auf dbDelta-Funktion  	
    		dbDelta($sql);
    		update_option("thekendienst_db_version", $thekendienst_db_version);
-   		return $rueckgabe.mysql_error().'<br><strong>Die Datenbank wurde erfolgreich verändert</strong><br>';
+   		return $rueckgabe.mysql_error().'<br><strong>'.__('Die Datenbank wurde erfolgreich verändert').'</strong><br>';
    	}
    else {
    		return $rueckgabe;
