@@ -70,6 +70,13 @@ In der Regel kann ich keinen support leisten, einen Versuch kann aber jeder inte
 
 == Changelog ==
 
+= 0.3beta =
+* minor bugfix
+
+= 0.3alpha =
+* adding some internationalization stuff
+* now it is possible to download ics-Files for the timeframes
+
 (german)
 = 0.2beta =
 * Hier nun die nächste Version in der Admins nun Veranstaltungen dauerhaft(!) zuklappen können. Das ist zwar nicht besonders serverfreundlich programmiert (weil vgl. oft auf die Datenbank zugegriffen wird), funktioniert aber.
