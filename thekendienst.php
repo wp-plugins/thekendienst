@@ -69,13 +69,13 @@ function Datenbankanlegen() {//Sollte keine Tabelle vorliegen, wird eine erzeugt
    		require_once(ABSPATH . 'wp-admin/includes/upgrade.php'); //emröglicht Zugriff auf dbDelta-Funktion
 		dbDelta($sql);//erzeugt neue Tabelle in Datenbank
 		add_option("thekendienst_db_version", $thekendienst_db_version);
-		return $rueckgabe.mysql_error().'<br><strong>Die Datenbank wurde erfolgreich NEU angelegt</strong><br>';
+		return $rueckgabe.mysql_error().'<br><strong>'.__('Die Datenbank wurde erfolgreich NEU angelegt', 'thekendienst_textdomain').'</strong><br>';
    }
    elseif($current_db_version=='0.1' OR $current_db_version=='0.2' OR $current_db_version=='0.3') {
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php'); //emröglicht Zugriff auf dbDelta-Funktion  	
    		dbDelta($sql);
    		update_option("thekendienst_db_version", $thekendienst_db_version);
-   		return $rueckgabe.mysql_error().'<br><strong>'.__('Die Datenbank wurde erfolgreich verändert').'</strong><br>';
+   		return $rueckgabe.mysql_error().'<br><strong>'.__('Die Datenbank wurde erfolgreich verändert', 'thekendienst_textdomain').'</strong><br>';
    	}
    else {
    		return $rueckgabe;

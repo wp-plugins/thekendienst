@@ -73,15 +73,14 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName, $editierbar=true)
 				<table class="thekendienst_zeitfenster" id="thekendienst_zeitfenster_'.$ID.'" style="display: '.$display_var.'">					
 					<tbody>
 						<tr class="headline">';
-		$rueckgabe.='<td>ID</td><td colspan="5">'.__('Zeitfenster').'</td>';
+		$rueckgabe.='<td rowspan="2">'.__('Termin<br>down-<br>loaden').'</td><td colspan="5">'.__('Zeitfenster').'</td>';
 		$rueckgabe.='	</tr>
 						<tr class="headline">
-							<td>&nbsp;</td>
-							<td>'.__('Tag').'</td>
-							<td>'.__('Startzeit').'</td>
-							<td>'.__('Endzeit').'</td>
-							<td style="text-align: center;">'.__('Anzahl der').'<br/>'.__('Mitarbeiter').'</td>
-							<td>'.__('Kommentar').'</td>
+							<td>'.__('Tag', 'thekendienst_textdomain').'</td>
+							<td>'.__('Startzeit', 'thekendienst_textdomain').'</td>
+							<td>'.__('Endzeit', 'thekendienst_textdomain').'</td>
+							<td style="text-align: center;">'.__('Anzahl der').'<br/>'.__('Mitarbeiter', 'thekendienst_textdomain').'</td>
+							<td>'.__('Kommentar', 'thekendienst_textdomain').'</td>
 						</tr>'; //Die Kopfzeile der Zeitfenster wird generiert.
 		$i=$i++;
 		$hoechstezeitfensterID=0;
@@ -93,7 +92,7 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName, $editierbar=true)
 			else $adminbearbeitenjavascript='';
 			$rueckgabe.='
 				<tr id="Zeitfenster_'.$ID.'_'.$zeile['IDZeitfenster'].'">
-					<td>'.$zeile['IDZeitfenster'].'</td>
+					<td align="center"><a href="'.WP_PLUGIN_URL.'/thekendienst/thekendienst_ics.php?title='.urlencode($AufstellungsName).'&blogname='.get_bloginfo('name', 'raw').'&day='.strtotime($zeile['Tag']).'&start='.$zeile['Startzeit'].'&end='.$zeile['Endzeit'].'&id='.$ID.'?comment='.$zeile['KommentarZeitfenster'].'&url='.get_permalink().'">ics</a></td>
 					<td><!-- '.$zeile['Tag'].' -->'.date("l, j.n.Y", strtotime($zeile['Tag'])).'</td>
 					<td>'.$zeile['Startzeit'].'</td>
 					<td>'.$zeile['Endzeit'].'</td>
@@ -285,9 +284,9 @@ function AufstellungermittelnAdmin() {//
 			//Geht das Veranstaltungsnamen-Array durch (ruft die Übersicht der Veranstaltungen auf)
 			//echo current_user_hat_es_ausgeblendet($user_ID, $zeile['Ausgeblendet']);
 			if(current_user_hat_es_ausgeblendet($user_ID, $zeile['Ausgeblendet'])===true) {
-				$aus_einblend_string="dauerhaft einblenden";
+				$aus_einblend_string=__('dauerhaft einblenden', 'thekendienst_textdomain');
 			}
-			else $aus_einblend_string="dauerhaft ausblenden";
+			else $aus_einblend_string=__('dauerhaft ausblenden', 'thekendienst_textdomain');
 			$rueckgabe.='
 			<tr>
 				<td>'.$zeile["AufstellungsID"].'</td>
