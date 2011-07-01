@@ -4,11 +4,11 @@ Plugin Name: Thekendienst
 Plugin URI: http://thekendienstplugin.derdateienhafen.de/
 Description: Plugin zum Verwalten von Diensten
 Author: Janne Jakob Fleischer
-Version: 0.3alpha
+Version: 0.3beta
 License: GPL
 Author URI: none
 Update Server: none
-Min WP version: 3.0.5
+Min WP version: 2.8
 Max WP Version: 3.0.5
 */
 

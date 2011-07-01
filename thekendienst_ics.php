@@ -12,8 +12,8 @@ PRODID:'.$_GET['blogname'].'
 METHOD:PUBLISH
 BEGIN:VEVENT
 UID:'.$title.$date.$start.$description.time().'@Thekendienst-Plugin
-ORGANIZER;CN="Alice Balder, Example Inc.":MAILTO:alice@example.com
-SUMMARY:Thekendienst-Termin
+ORGANIZER;CN="thekendienstplugin":MAILTO:
+SUMMARY:Thekendienst - '.$title.'
 DESCRIPTION:Thekendienst bei der Veranstaltung "'.$title.'"\n am '.date("d.m.Y",$_GET['day']).' um '.$_GET['start'].'  eingetragen. Kommentar zur Veranstaltung: '.$_GET['comment'].'
 CLASS:PUBLIC
 DTSTART;TZID="(GMT+0200)":'.date("Ymd",$_GET['day']).'T'.str_replace(":","",$_GET['start']).'
