@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Thekendienst
-Plugin URI: http://thekendienstplugin.derdateienhafen.de/
+Plugin URI: http://wordpress.org/extend/plugins/thekendienst/
 Description: Plugin zum Verwalten von Diensten
 Author: Janne Jakob Fleischer
 Version: 0.3beta
