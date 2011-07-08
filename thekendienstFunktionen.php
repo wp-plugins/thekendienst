@@ -56,8 +56,8 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName, $editierbar=true)
 	$letzteEndzeit="00:00:00";
 	$i=0;
 	(int) $further_i=null;
-	$sql='SELECT IDZeitfenster, Tag, KommentarZeitfenster, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE (AufstellungsID="'.$ID.'" AND Archiv!="1") ORDER BY AufstellungsID, IDZeitfenster, Tag, Startzeit, IDMitarbeiter' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
-	$sql2='SELECT IDZeitfenster, Tag, KommentarZeitfenster, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE (AufstellungsID="'.$ID.'") ORDER BY AufstellungsID, IDZeitfenster, Tag, Startzeit, IDMitarbeiter' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
+	$sql='SELECT IDZeitfenster, Tag, KommentarZeitfenster, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE (AufstellungsID="'.$ID.'" AND Archiv!="1") ORDER BY Tag, Startzeit, AufstellungsID, IDZeitfenster, IDMitarbeiter' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
+	$sql2='SELECT IDZeitfenster, Tag, KommentarZeitfenster, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE (AufstellungsID="'.$ID.'") ORDER BY Tag, Startzeit, AufstellungsID, IDZeitfenster, IDMitarbeiter' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
 	$tabelle=$wpdb->get_results($sql, ARRAY_A); //übertragen der Ergebnisse in ein mit Spaltennamen indexiertes Array
 	$tabelle2=$wpdb->get_results($sql2, ARRAY_A); //übertragen der Ergebnisse in ein mit Spaltennamen indexiertes Array
 	if(current_user_hat_es_ausgeblendet($user_ID, $tabelle[0]['Ausgeblendet'])) {
