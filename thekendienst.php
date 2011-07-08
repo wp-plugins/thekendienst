@@ -4,7 +4,7 @@ Plugin Name: Thekendienst
 Plugin URI: http://wordpress.org/extend/plugins/thekendienst/
 Description: Plugin zum Verwalten von Diensten
 Author: Janne Jakob Fleischer
-Version: 0.3beta
+Version: 0.3.1beta
 License: GPL
 Author URI: none
 Update Server: none
