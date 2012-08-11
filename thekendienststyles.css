@@ -1,0 +1,65 @@
+/* @override http://localhost:8888/Thekendienste/wp-content/plugins/thekendienst/thekendienststyles.css */
+
+table.thekendienst td {
+	text-align: middle;
+	vertical-align: middle;
+}
+table.thekendienst_main {
+	background: white;
+	width: 450px;
+	border: 1px dotted #000;
+}
+
+table.thekendienst_main h4 {
+	margin-top: 3px;
+}
+
+table.thekendienst_main tbody tr.headline{
+	width: 15px;
+	font-weight: bold;
+	line-height: 0.9em;
+}
+
+table.thekendienst_main tbody tr.headline td{
+	border-bottom: 1px dotted #000 !important;
+}
+	
+table.thekendienst_main tbody tr td {
+	min-width:15px;
+	padding: 5px;
+}
+
+table.thekendienst_main tbody tr td.ID{
+	width: 15px;
+}
+
+table.thekendienst_main tbody tr td.thekendienst_ID{
+	width: 15px;
+}
+
+table.thekendienst_zeitfenster {
+	width:100%;
+	background: #f0f0f0;
+}
+
+table.thekendienst_zeitfenster tbody tr td {
+	font-size: 0.8em;
+	padding: 3px;
+}
+
+table.thekendienst_namen {
+	background: white;
+	width: 100%;
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+
+table.thekendienst_namen tbody tr td {
+	font-size: 1em;
+}
+
+table.thekendienst_namen tbody tr td.thekendienst_namen_ueberschrift{
+	width: 100%;
+}
+
+

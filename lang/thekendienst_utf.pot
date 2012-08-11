@@ -1,0 +1,128 @@
+# Copyright (C) 2010 Thekendienst
+# This file is distributed under the same license as the Thekendienst package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Thekendienst 0.3alpha\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/thekendienst\n"
+"POT-Creation-Date: 2011-05-02 14:06:59+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2010-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: thekendienst.php:78
+msgid "Die Datenbank wurde erfolgreich verändert"
+msgstr ""
+
+#: thekendienstFunktionen.php:48 thekendienstFunktionen.php:304
+msgid "ein/ausblenden"
+msgstr ""
+
+#: thekendienstFunktionen.php:76
+msgid "Zeitfenster"
+msgstr ""
+
+#: thekendienstFunktionen.php:80 thekendienstFunktionen.php:371
+msgid "Tag"
+msgstr ""
+
+#: thekendienstFunktionen.php:81 thekendienstFunktionen.php:373
+msgid "Startzeit"
+msgstr ""
+
+#: thekendienstFunktionen.php:82 thekendienstFunktionen.php:374
+msgid "Endzeit"
+msgstr ""
+
+#: thekendienstFunktionen.php:83
+msgid "Anzahl der"
+msgstr ""
+
+#: thekendienstFunktionen.php:83 thekendienstFunktionen.php:375
+msgid "Mitarbeiter"
+msgstr ""
+
+#: thekendienstFunktionen.php:84 thekendienstFunktionen.php:376
+msgid "Kommentar"
+msgstr ""
+
+#: thekendienstFunktionen.php:130
+msgid "Anfang der Zeitfenster"
+msgstr ""
+
+#: thekendienstFunktionen.php:156
+msgid "(verbergen)"
+msgstr ""
+
+#: thekendienstFunktionen.php:164
+msgid "Name"
+msgstr ""
+
+#: thekendienstFunktionen.php:173
+msgid "-noch Platz-"
+msgstr ""
+
+#: thekendienstFunktionen.php:175 thekendienstFunktionen.php:392
+msgid "eintragen"
+msgstr ""
+
+#: thekendienstFunktionen.php:196
+msgid "-Andere-"
+msgstr ""
+
+#: thekendienstFunktionen.php:221
+msgid "austragen"
+msgstr ""
+
+#: thekendienstFunktionen.php:249
+msgid "Namesfeld für weitere Personen"
+msgstr ""
+
+#: thekendienstFunktionen.php:250
+msgid "Knopf für weitere Personen"
+msgstr ""
+
+#: thekendienstFunktionen.php:253
+msgid "Fehler, das Zeitfenster und/oder die Veranstaltung existiert nicht(mehr) = Irgendwer hat an der Datenbank was kaputt gemacht"
+msgstr ""
+
+#: thekendienstFunktionen.php:300
+msgid "dauerhaft ein/ausblenden"
+msgstr ""
+
+#: thekendienstFunktionen.php:340
+msgid "Neue Veranstaltung eintragen"
+msgstr ""
+
+#: thekendienstFunktionen.php:351
+msgid "erstellen"
+msgstr ""
+
+#: thekendienstFunktionen.php:369
+msgid "Neues zeitfenster erzeugen"
+msgstr ""
+
+#: thekendienstFunktionen.php:375
+msgid "Anzahl der "
+msgstr ""
+#. Plugin Name of the plugin/theme
+msgid "Thekendienst"
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid "http://thekendienstplugin.derdateienhafen.de/"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid "Plugin zum Verwalten von Diensten"
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Janne Jakob Fleischer"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "none"
+msgstr ""
