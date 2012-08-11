@@ -48,19 +48,19 @@ function Aufstellunganzeigen($veranstaltungsname,$id){
 				<a href="javascript:ein_ausklappen(\'thekendienst_zeitfenster_\',\''.$id.'\')">'.__('ein/ausblenden').'</a>
 			</td>
 		</tr>';
-	return Tabellenanfang().$tabellenmitte.aufklappenListederZeitfenster($id, $veranstaltungsname).Tabellenende();
+	return Tabellenanfang().$tabellenmitte.aufklappenListederZeitfenster($id, $veranstaltungsname, false).Tabellenende();
 }
 	
-function aufklappenListederZeitfenster($ID, $AufstellungsName, $editierbar=true) { //Ruft eine Liste aller Zeitfenster zur Mutter-Veranstaltung auf ($ID)
+function aufklappenListederZeitfenster($ID, $AufstellungsName, $backend=true, $editierbar=true) { //Ruft eine Liste aller Zeitfenster zur Mutter-Veranstaltung auf ($ID)
 	global $wpdb, $table_prefix, $user_ID;
 	$letzteEndzeit="00:00:00";
 	$i=0;
 	(int) $further_i=null;
-	$sql='SELECT IDZeitfenster, Tag, KommentarZeitfenster, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE (AufstellungsID="'.$ID.'" AND Archiv!="1") ORDER BY Tag, Startzeit, AufstellungsID, IDZeitfenster, IDMitarbeiter' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
-	$sql2='SELECT IDZeitfenster, Tag, KommentarZeitfenster, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE (AufstellungsID="'.$ID.'") ORDER BY Tag, Startzeit, AufstellungsID, IDZeitfenster, IDMitarbeiter' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
+	$sql='SELECT IDZeitfenster, Tag, KommentarZeitfenster, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE (AufstellungsID="'.$ID.'" AND Archiv!="1") ORDER BY Tag, Startzeit, AufstellungsID, IDZeitfenster, IDMitarbeiter ASC' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
+	$sql2='SELECT IDZeitfenster, Tag, KommentarZeitfenster, Startzeit, Endzeit, AnzahlMitarbeiter, IDMitarbeiter, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE (AufstellungsID="'.$ID.'") ORDER BY Tag, Startzeit, AufstellungsID, IDZeitfenster, IDMitarbeiter ASC' ; //Abfrage der Einträge zur aktuellen Veranstaltung ($ID)
 	$tabelle=$wpdb->get_results($sql, ARRAY_A); //übertragen der Ergebnisse in ein mit Spaltennamen indexiertes Array
 	$tabelle2=$wpdb->get_results($sql2, ARRAY_A); //übertragen der Ergebnisse in ein mit Spaltennamen indexiertes Array
-	if(current_user_hat_es_ausgeblendet($user_ID, $tabelle[0]['Ausgeblendet'])) {
+	if(current_user_hat_es_ausgeblendet($user_ID, $tabelle[0]['Ausgeblendet']) AND $backend) {
 		$display_var='none';
 	}
 	else $display_var='';
@@ -115,7 +115,7 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName, $editierbar=true)
 			$rueckgabe.=	'</td>
 						</tr>';//ruft eine Funktion auf, die ein Formular aufmacht, welches hidden die Variable $ID und $AufstellungsName enthält und um die Einträge IDZEitfenster, Tag, Startzeit, endzeit ergänzt werden kann. Der Tag und die vorhergehende Endzeit sollte in der Startzeit per default auftauchen.
 		}
-		$rueckgabe.='
+		$rueckgabe.='</tr>
 					</tbody>
 				</table>
 			</td>
@@ -130,7 +130,7 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName, $editierbar=true)
 			<table class="thekendienst_zeitfenster" id="thekendienst_zeitfenster_'.$ID.'">		
 				<tbody>
 				<tr><td>Diese Veranstaltung wurde gel&ouml;scht</td></tr>
-				</tbody
+				</tbody>
 			</table>
 		</td>
 		</tr>
@@ -277,7 +277,7 @@ function AufstellungermittelnAdmin() {//
 	global $wpdb, $user_ID;
 	global $table_prefix;
 	(string) $rueckgabe="";
-	$tabelle=$wpdb->get_results('SELECT AufstellungsID, AufstellungsName, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE Archiv!="1" GROUP BY AufstellungsID ORDER BY AufstellungsID', ARRAY_A); //Holt alle vorhanden Einträge aus der Datenbank
+	$tabelle=$wpdb->get_results('SELECT AufstellungsID, AufstellungsName, Ausgeblendet FROM '.$table_prefix.'thekendienst WHERE Archiv!="1" GROUP BY AufstellungsID ORDER BY AufstellungsID DESC', ARRAY_A); //Holt alle vorhanden Einträge aus der Datenbank
 	if(is_array($tabelle)) {
 		$letzterEintrag=end($tabelle);
 		foreach($tabelle as $zeile) {
