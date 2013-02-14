@@ -70,11 +70,14 @@ In der Regel kann ich keinen support leisten, einen Versuch kann aber jeder inte
 
 == Changelog ==
 
+= development-version =
+* there is a Problem with adding new shifts, haven't figured it out yet. Plugin is not working!
+
 = 0.3.1 =
 * changed the sort-order in backend for better maintenance of many events.
 * fixed a bug with the rendering of deleted events
 
-= 0.3.1beta=
+= 0.3.1beta =
 * changed the sort-order of time frames
 
 = 0.3beta =

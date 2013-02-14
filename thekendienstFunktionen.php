@@ -111,7 +111,16 @@ function aufklappenListederZeitfenster($ID, $AufstellungsName, $backend=true, $e
 			$rueckgabe.='
 						<tr id="FormularZeitfenster_'.$ID.'">
 							<td colspan="6">';
-			$rueckgabe.=		neueszeitfensterformular($ID, $AufstellungsName, $hoechstezeitfensterID, $letzterTag="2011-01-01", $letzteEndzeit); //baut formular für neue Zeitfenster auf (wird nur gezeigt wenn berechtigt) - übergibt relevante Daten
+			$rueckgabe.=		neueszeitfensterformular_array(
+					array(
+						IDAufstellung=>$ID, 
+						IDAufstellungsName=>$AufstellungsName, 
+						hoechstezeitfensterID=>$IDLetztesZeitfenster, 
+						defaultTag=>date(Y-m-d), 
+						defaultstartzeit=>$letzteEndzeit, 
+						defaultendzeit=>"09:30:00")
+					);
+			//($ID, $AufstellungsName, $hoechstezeitfensterID, $letzterTag="2011-01-01", $letzteEndzeit); //baut formular für neue Zeitfenster auf (wird nur gezeigt wenn berechtigt) - übergibt relevante Daten
 			$rueckgabe.=	'</td>
 						</tr>';//ruft eine Funktion auf, die ein Formular aufmacht, welches hidden die Variable $ID und $AufstellungsName enthält und um die Einträge IDZEitfenster, Tag, Startzeit, endzeit ergänzt werden kann. Der Tag und die vorhergehende Endzeit sollte in der Startzeit per default auftauchen.
 		}
@@ -357,15 +366,29 @@ function NeueVeranstaltungFormular($letzteAufstellungsID) {//Baut ein Formular a
 	return $rueckgabe;
 }
 
-function neueszeitfensterformular($IDAufstellung, $IDAufstellungsName, $IDLetztesZeitfenster, $defaulttag, $defaultstartzeit, $defaultendzeit="09:30:00") { //Erzeugt ein Formular um neue Zeitfenster anzulegen.
+function neueszeitfensterformular_array($values) {
+	$IDAufstellung = $values['IDAufstellung'];
+	$IDAufstellungsName = $values['IDAufstellungsName'];
+	$IDLetztesZeitfenster = $values['IDLetztesZeitfenster'];
+	$defaulttag = $values['defaulttag'];
+	$defaultstartzeit = $values['defaultstartzeit'];
+	$defaultendzeit = $values['defaultendzeit'];
+	if($defaultstartzeit=="") $defaultstartzeit='00:01:00'; //falls keine defaultzeit übergeben wurde
+	if($defaulttag=="") $defaulttag='2010-01-01'; //falls kein defaulttag übergeben wurde
+	if($defaultendzeit == "") $defaultendzeit="09:30:00";
+	print_r($values);
+	return neueszeitfensterformular($IDAufstellung, $IDAufstellungsName, $IDLetztesZeitfenster, $defaulttag, $defaultstartzeit, $defaultendzeit);
+}
+
+function neueszeitfensterformular($IDAufstellung, $IDAufstellungsName, $IDLetztesZeitfenster, $defaulttag, $defaultstartzeit, $defaultendzeit) { //Erzeugt ein Formular um neue Zeitfenster anzulegen.
 	if(is_admin()) $defaultendzeit=$defaultstartzeit;
 	$IDZeitfenster=$IDLetztesZeitfenster+1;//Berechnet die neue ID des Zeitfensters
-	if($defaultstartzeit=="") $defaultstartzeit='00:00'; //falls keine defaultzeit übergeben wurde
-	if($defaulttag=="") $defaulttag='2010-01-01'; //falls kein defaulttag übergeben wurde
+	
 	$rueckgabe='
 								<form action="" method="post">
 									<table class="thekendienst_namen" id="thekendienst_namen_'.$IDAufstellung.'_'.$IDZeitfenster.'">
 										<tr><td colspan="5" align="left" id="ueberschriftformular"><strong>'.__('Neues zeitfenster erzeugen').'</strong></td></tr>
+										<tr><td colspan="5"><label>yyy</label> zzz</td></tr>
 										<tr>
 											<td>'.__('Tag').'</td>
 
@@ -452,6 +475,7 @@ function neueveranstaltungeintragen($content="") {//Veranstaltung in Datenbank e
 function zeitfenstereintragen($content) {//erstellt neue Zeitfenster
 	//error_log("zeitfenstereintragen erreicht", 3, "/php_temp.log");
 	$zeile=$_POST;
+	print_r($_POST);
 	global $wpdb, $table_prefix;
 	if(
 		check_time($zeile['Startzeit']) &&
