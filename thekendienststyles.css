@@ -1,6 +1,10 @@
 /* @override http://localhost:8888/Thekendienste/wp-content/plugins/thekendienst/thekendienststyles.css */
+div.thekendienst2 table,
+div.thekendienst2 td {
+	border: 1px solid black !important;
+}
 
-table.thekendienst td {
+div.thekendienst2 td {
 	text-align: middle;
 	vertical-align: middle;
 }
