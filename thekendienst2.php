@@ -42,7 +42,8 @@ function td2_admin_panel() {
 /* *************************************************** 
 switch and decide functions
 *************************************************** */
-if(isset($_POST['td2_participate'])) add_filter('the_content','td2_participator');
+if(isset($_POST['td2_participate_submit'])) add_filter('the_content','td2_participator');
+//elseif(isset($_POST['td2_participate_submit'])) add_filter('the_content','');
 add_filter('the_content', 'td2_get_events_printed');
 
 
@@ -74,15 +75,16 @@ function td2_event_creator($content) {
 	$event->add_basics(array('ID'=>$_POST('id'),'Name'=>$_POST('Name')));
 	//$event->calculate_timeframes($_POST);
 	//$event->save_to_db();
-	print_r($event);
+	//print_r($event);
 	$content=td2_get_events_printed($content, $event, true);
 	return $content;
 }
 
 function td2_participator($content) {
-	$events=td2_get_events($_POST['ID']); //to write: function that gives all events with the succeeding timeframes)
+	$events=td2_get_events($_POST['ID']);
+	print_r($events);
 	foreach ($events as $event) {
-		if($event->id_timeframe==$_POST['ID-timeframe']) $event->participate();
+		if($event->id_timeframe==$_POST['ID-timeframe']) $content=$event->participate($content);
 	}
 	return $content;
 }
@@ -158,7 +160,7 @@ class td2_event
 	
 		
 	public function participate($content) { //attention: $content need to include an information in which timeframe you like to dive in. Guessing: not trivial and maybe only works with a search through all the timeframes for a criteria. Or put a unique id into the html-form (quessing: Problems with more than one user at a time).
-		return $this->timeframes[$_POST['ID_timeframe']]->participate($content);
+		return $this->timeframes[$_POST['id_timeframe']]->participate($content);
 	}
 	
 	public function get_data() {
@@ -255,8 +257,16 @@ class td2_timeframe
 	}
 	
 	public function participate($content) {
-		$this->participants[$content['id']][] = new td2_participant;
-		end($this->participants[$content['id']])->add_data($content);
+		global $wpdb;
+		$sql_user='SELECT ID, user_login, display_name FROM '.$wpdb->users;
+		$users=$wpdb->get_results($sql_user, ARRAY_A);
+		foreach ($users as $user) { 
+			if($user->login_name == $_POST['td2_participant_opts']) 
+				$user_data=array('user_id'=>$user->ID , 'user_name'=>$user->login_name);
+		}
+		$participant = new td2_participant($_POST['id_timeframe']);
+		$participant->add_data($user_data);
+		$participant->save_data();
 		return true;
 	}
 	
@@ -283,12 +293,12 @@ class td2_timeframe
 	public function print_data() {
 		$rv='
 			<tr class="timeframe, mark_'.$this->mark.'">
-				<td class="td2_firstrow"><td>
+				<td class="td2_firstrow"></td>
 				<td class="td2_date">'.$this->date.'</td>
 				<td class="td2_start_time">'.$this->starting_time.'</td>
 				<td class="td2_end_time">'.$this->ending_time.'</td>
 				<td class="td2_count">'.$this->count.'</td>
-				<td class="td2_comment">'.$this->comment.'</td>
+				<td colspan="2" class="td2_comment">'.$this->comment.'</td>
 			</tr>';
 		return $rv;
 	}
@@ -325,6 +335,25 @@ class td2_participant
 			</tr>';
 		return $rv;
 	}
+	public function save_data() {
+		global $wpdb, $table_prefix;
+		$table = $table_prefix.'thekendienst2_timeframe';
+		$sql_get='SELECT id_timeframe, participants from '.$table.' WHERE id_timeframe='.$this->mother_timeframe.' ORDER BY id_timeframe';
+		$timeframe_data=$wpdb->get_results($sql_get, ARRAY_A);
+		if(mysql_affected_rows()>1) return 'something went wrong: there are doublettes in the database';
+		$timeframe_data[0];
+		$participants=unserialize($timeframe_data[0]['participants']);
+		$breakout==false;
+		foreach($participants as $p) {
+			if($breakout==true || $p->user_id==$this->user_id) {
+				return 'allready subscribed';
+			}
+		}
+		$participants[]=$this;
+		$sql_put='UPDATE '.$table1.' SET participants='.serialize($participants).'WHERE id_timeframe='.$this->mother_timeframe.'';
+		$wpdb->query($sql_put);
+		return 'you‘ve been subscribed';
+	}
 }
 
 class td2_create_new_participation_form {
@@ -339,15 +368,19 @@ class td2_create_new_participation_form {
 		$current_user=wp_get_current_user();
 		$sql_user='SELECT ID, user_login, display_name FROM '.$wpdb->users;
 		$users=$wpdb->get_results($sql_user, ARRAY_A);
-		$rv='';
+		$rv1='';
+		$rv2[]='';
 		foreach ($users as $user) {
 			if($user["user_login"]==$current_user->user_login) {
-				$rv.="<option selected>".$user['user_login']."</option>";
+				$rv1.="<option selected>".$user['user_login']."</option>";
 			}
-			else $rv.='<option>'.$user["user_login"].'</option>
+			else $rv1.='<option>'.$user["user_login"].'</option>
 			';
+			//print_r($user);
+			$rv2[]=array($user['ID']=>$user['user_login']);
 		}
-		$this->users_in_option=$rv;
+		$this->users_in_option[1]=$rv1;
+		$this->users_in_option[2]=$rv2;
 	}
 	
 	public function __construct($id_timeframe=null,$id=null) {
@@ -358,19 +391,22 @@ class td2_create_new_participation_form {
 	
 	public function form() {
 		$current_user=wp_get_current_user();
-		if(!isset($this->users_in_option)) $this->list_users_option();
+		if(!isset($this->users_in_option[1])) $this->list_users_option();
 		$rv='';
 		$rv.='
 			<tr>
 				<form action="" method="post" name="td2_participationform">
 					<td>&nbsp</td>
+					<td>&nbsp</td>
 					<td colspan="3">
 						<select name="td2_participant_opts">
-						'.$this->users_in_option.'
+						'.$this->users_in_option[1].'
 						</select>
 					</td>
-					<td colspan="3">
-						<input type="submit" name="td2_participate_submit"/>
+					<td colspan="2">
+						<input type="submit" name="td2_participate_submit"  value="submit">
+						<input type="hidden" value="'.$this->id_timeframe.'" name="id_timeframe"/>
+						<input type="hidden" value="'.$this->id.'" name="ID"/>
 					</td>
 				</form>
 			</tr>			
@@ -390,7 +426,7 @@ class td2_create_new_event_form {
 	public function __construct() {
 		$objects=td2_get_events();
 		$last=end($objects);
-		print_r($last);
+		//print_r($last);
 		$this->id=$last['ID']+1;
 		$this->session_id=session_id();
 	}
@@ -514,7 +550,7 @@ class td2_create_new_event_form {
 /* *************************************************** 
 basic functions
 *************************************************** */
-function td2_get_events($event=null, $mark = false) {
+function td2_get_events($event=null, $mark = false, $timeframe=null) {
 	//if (!isset($event)) $event = new td2_event;
 	global $wpdb, $table_prefix;
 	$table1 = $table_prefix.'thekendienst2_event';
