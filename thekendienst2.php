@@ -16,13 +16,21 @@ Max WP Version: 3.5.1
 global $thekendienst2_db_version;
 $thekendienst2_db_version='2.0';
 
-//hook at activation
-//register_activation_hook(__FILE__, 'td_createdatabase');
-echo td_createdatabase(); //workaround for not-working-hook. Uncomment, if needed (necessary in development-systems with hard or symbolic links)
 
 /* *************************************************** 
-hooks
+hooks & catcher
 *************************************************** */
+if(isset($_POST['td2_participate_submit'])) {
+	if(isset($content)) add_filter('the_content','td2_participator');
+	else add_action('td2_participate_retrieve', 'td2_participator');
+}
+if(isset($_POST['td2_eventcreation'])) {
+	if(isset($content)) add_filter('the_content','td2_event_creator');
+	else add_action('td2_event_create_retrieve', 'td2_event_creator');
+}
+
+add_filter('the_content', 'td2_get_events_printed');
+
 add_action('admin_notices', 'td2_admin_notice');
 add_action('wp_head', 'td2_loadstylesheets');
 add_action('admin_head', 'td2_loadstylesheets_admin');
@@ -31,67 +39,54 @@ add_action('admin_init','td2_loadjavascripts');
 add_action('admin_menu','td2_admin_panel');
 
 
+
 /* *************************************************** 
 initiation functions
 *************************************************** */
 function td2_admin_panel() {
 	add_options_page('Thekendienst', 'Thekendienst', 'edit_posts', 'thekendienst2-options', 'td2_admin_panel_decider');
 	}
-
+	
+//hook at activation
+//register_activation_hook(__FILE__, 'td_createdatabase');
+echo td_createdatabase(); //workaround for not-working-hook. Uncomment, if needed (necessary in development-systems with hard or symbolic links)
 
 /* *************************************************** 
 switch and decide functions
 *************************************************** */
-if(isset($_POST['td2_participate_submit'])) add_filter('the_content','td2_participator');
-//elseif(isset($_POST['td2_participate_submit'])) add_filter('the_content','');
-add_filter('the_content', 'td2_get_events_printed');
 
-
-function td2_admin_panel_decider() {
-	if(isset($_POST['td2_eventcreation'])) add_filter('the_content','td2_event_creator');
-	$new_event= new td2_create_new_event_form();
-	echo $new_event->print_data();
-	print_r($_POST);
+function td2_admin_panel_decider($content) {
+	
+	echo '<div width="50%" style="outline: 1px solid black">Value of $_POST:<br/>'.print_r($_POST, true).'</div>';
+	do_action('td2_participate_retrieve');
+	do_action('td2_event_create_retrieve');
+	$new_event_form= new td2_create_new_event_form();
+	echo $new_event_form->print_data();
 	echo '<div class="thekendienst2">'.td2_get_events_printed(null).'</div>';
-	
-	
-	/*
-	if(isset($_POST['zeitfenstereintragen'])) zeitfenstereintragen("");
-	elseif(isset($_POST['zeitfensteraendern'])) zeitfensteraendern("");
-	elseif(isset($_POST['zeitfenster_loeschen'])) zeitfensterloeschen("");
-	elseif(isset($_POST['neueveranstaltunggesetzt'])) neueveranstaltungeintragen("");
-	elseif(isset($_POST['eintragen'])) eintragenName("");
-	elseif(isset($_POST['austragen'])) austragenName("");
-	elseif(isset($_POST['veranstaltungloeschen'])) veranstaltungloeschen("");
-	elseif(isset($_POST['dauerhaft_ein_ausblenden'])) dauerhaft_ein_ausblenden("");
-	echo Tabellenanfang().AufstellungermittelnAdmin().Tabellenende();*/
+	return $content;
 }
 /* *************************************************** 
 help functions for deciders
 *************************************************** */
 function td2_event_creator($content) {
 	$event = new td2_event;
-	extract($_POST);
-	$event->add_basics(array('ID'=>$_POST('id'),'Name'=>$_POST('Name')));
-	//$event->calculate_timeframes($_POST);
-	//$event->save_to_db();
-	//print_r($event);
-	$content=td2_get_events_printed($content, $event, true);
-	return $content;
+	//extract($_POST);
+	//javascript neccessary: A value in the Name-Field is mandatory.
+	$event->add_basics(array('ID'=>$_POST['id'],'Name'=>$_POST['td2_title_of_event']));
+	$event->calculate_timeframes();
+	$event->save_data();
+	//$content=td2_get_events_printed($content, $event, true);
+	return $event;
 }
 
 function td2_participator($content) {
 	$events=td2_get_events($_POST['ID']);
-	print_r($events);
-	foreach ($events as $event) {
-		if($event->id_timeframe==$_POST['ID-timeframe']) $content=$event->participate($content);
+	foreach ($events[0] as $part) {
+		if(get_class($part)=='td2_timeframe') {
+			if(isset($part->id_timeframe) && $part->id_timeframe==$_POST['id_timeframe']) $content=$part->participate($content);
+		}
 	}
 	return $content;
-}
-
-function td2_findobject ($ID, $ID_timeframe, $user_id) {
-	
-	return $ro;
 }
 
 /* *************************************************** 
@@ -108,6 +103,7 @@ class td2_event
 	public $ID;
 	public $Name;
 	public $timeframes;
+	public $timeframe_ids;
 	public $mark;
 	public function add_basics($content) {
 		$this->ID=$content['ID'];
@@ -124,21 +120,101 @@ class td2_event
 		return $this->add_basics($content);
 	}
 	
-	public function add_timeframe($content = array('id'=>-1)) {
+	public function add_timeframe($content = array('ID'=>-1)) {
 	// if there is no id on runtime specified, the default value of -1 will cause this function to kill itself.
-	
-		if (!isset($this->timeframes[$content['id']])) 
+		$timeframe_ids= array();
+		if ($content['ID']!=-1 && !isset($this->timeframes)) 
 		{
-			$this->timeframes[$content['id']][] = new td2_timeframe;
+			$this->timeframes[] = new td2_timeframe;
 			end($this->timeframes)->add_data($content);
+			//index id_timeframe hasn't been constructed yet.
+			$this->timeframe_ids[]=$content['id_timeframe'];
 		}
-		else td_admin_notice(__('An error occured: An id for this timeframe hadn\'t been specified'));
+		else td2_admin_notice(__('An error occured: An id for this timeframe hadn\'t been specified'));
 		return ;
 	}
 	
-	public function add_data_db($content) {
-		//put an array from db in, get an object (with data in it) out.
+	public function calculate_timeframes($args=null) {
+		/*
+		$array = array( 
+			'td2_title_of_event' => ,
+			'id' => 1 ,
+			'session_id' => '',
+			'date_day' => 15 ,
+			'date_month' => 6,
+			'date_year' => 2012,
+			'start_hour' => 12, 
+			'start_minute' => 30,
+			'end_hour' => 12,
+			'end_minute' => 30,
+			'count' => 4,
+			'comment' => '',
+			'count_of_timeframes' => ;
+			'td2_options_on_creation' => 'once',
+			'td2_eventcreation' => 'Create event');
+		*/
+		$date=mktime(0, 0, 0, $_POST['date_month'], $_POST['date_day'], $_POST['date_year']);
+		$start=mktime($_POST['start_hour'], $_POST['start_minute'], 0, $_POST['date_month'], $_POST['date_day'], $_POST['date_year']);
+		$end=mktime($_POST['end_hour'], $_POST['end_minute'], 0, $_POST['date_month'], $_POST['date_day'], $_POST['date_year']);
+		/*	
+		$this->id_timeframe=$value['ID_timeframe'];
+		$this->date=$value['date'];
+		$this->starting_time=$value['starting_time'];
+		$this->ending_time=$value['ending_time'];
+		$this->count=$value['count'];
+		$this->comment=$value['comment']
+		*/
+		$data=array(
+			'ID' => $_POST['id'],
+			'date' => $date,
+			'starting_time' => $start,
+			'ending_time' => $end,
+			'count' => $_POST['count'],
+			'comment' => $_POST['count']
+		);
+		switch ($_POST['td2_options_on_creation']) {
+			case 'once' : 
+				$this->add_timeframe($data);
+				break;
+			case 'multiply' : 
+				$add=$data['ending_time']-$data['starting_time'];
+				for($i=1; $i<=$_POST['count_of_timeframes']; $i++) {
+					$this->add_timeframe($data);
+					$data['starting_time']=	$data['ending_time'];
+					$data['ending_time']=$data['ending_time']+$add;
+				}
+				break;
+			case 'split' : 
+				$lasts=$data['ending_time']-$data['starting_time'];
+				$frame=$lasts % $_POST['count_of_frames'];
+				$middle=$lasts / 2;
+				for($i=$_POST['count_of_frames']%2; $i>=0; $i--) {
+					$begin_rev[]=$middle-$frame;
+				}
+				$timeframes=array_reverse($begin_rev);
+				if($timeframes[0]>$start) {
+					$timeframes[0]=$timeframes[0]+$timeframes[0]-$start;
+				}
+				for($i=$_POST['count_of_frames']%2; $i<$_POST['count_of_frames']; $i++) {
+					$timeframes[]=$middle+$frame;
+				}
+				foreach($timeframes as $key=>$frame_start) {
+					$timeframe=array(
+						'ID' => $_POST['id'],
+						'ID_timeframe' => false,
+						'date' => $date,
+						'starting_time' => $frame_start,
+						'ending_time' => $timeframes[$key]-1,
+						'count' => $_POST['count'],
+						'comment' => $_POST['count']
+					);
+					$this->add_timeframe($timeframe);
+				}
+				break;
+			default : echo 'something went wrong'; break;
+		}
 	}
+	
 	
 	private function sort_timeframes() {
 	//sorts out, that the timeframes appear in a timely-fashion order. first apperas first. The data (in ram) gets to get ordered and afterwards can be added to the database.
@@ -177,14 +253,33 @@ class td2_event
 	
 	public function print_data() {
 		$rv='
-			<tr class="event, mark_'.var_export($this->mark).'">
-				<td class="td2_firstrow, mark_'.var_export($this->mark).'">'.$this->ID.'</td>
+			<!-- Event -->
+			<tr class="event, mark_'.$this->mark.'">
+				<td class="td2_firstrow, mark_'.$this->mark.'">'.$this->ID.'</td>
 				<td class="td2_eventline" colspan="6">'.$this->Name.'</td>
 			</tr>
 			';
 		return $rv;
 	}
-		
+	
+	public function save_data() {
+		global $wpdb, $table_prefix;
+		$table1 = $table_prefix.'thekendienst2_event';
+		$table2 = $table_prefix.'thekendienst2_timeframe';
+		if(isset($this->timeframes)) {
+			foreach($this->timeframes as $timeframe) {
+				if(is_object($timeframe)) {
+					$timeframes[]=$timeframe->id_timeframe;
+					$timeframe->save_data();
+				}
+			}
+		}
+		$values1= "ID='".$this->ID."', Name='".$this->Name."', timeframes='".serialize($this->timeframe_ids)."'";
+		$sql1="INSERT INTO ".$table1." SET ".$values1."";
+		$wpdb->query($sql1);
+		echo mysql_error();
+	}
+			
 	private function help_with_object($object) {
 	//recursive flattening of objects in arrays: putting all the data in an array of arrays. Each of this arrays contains only one type of data so td2_put_objects_in_a_table() can work with the data.
 		(array) $z;
@@ -218,12 +313,13 @@ class td2_event
 
 class td2_timeframe 
 {
+	public $ID;
 	public $id_timeframe;
-	public $date="2013.01.01";
-	public $starting_time="08:00:00";
-	public $ending_time="10:00:00";
-	public $count=3;
-	public $comment="";
+	public $date;
+	public $starting_time;
+	public $ending_time;
+	public $count;
+	public $comment;
 	public $participants;
 	public $mark;
 	public $participation_form;
@@ -235,17 +331,19 @@ class td2_timeframe
 		return ;
 	}
 	
-	public function add_data($content) {
-		$this->id_timeframe=$content['ID_timeframe'];
-		$this->date=$content['date'];
-		$this->starting_time=$content['starting_time'];
-		$this->ending_time=$content['ending_time'];
-		$this->count=$content['count'];
-		$this->comment=$content['comment'];
-		if ($content['participants'] != '') {
-			foreach (unserialize($content['participants']) as $participant_data) {
-				$participant= new td2_participant($this->id_timeframe);
-				$participant->add_data($participant_data);
+	public function add_data($value) {
+		$this->ID=$value['ID'];
+		$this->id_timeframe=$value['ID_timeframe'];
+		$this->date=$value['date'];
+		$this->starting_time=$value['starting_time'];
+		$this->ending_time=$value['ending_time'];
+		$this->count=$value['count'];
+		$this->comment=$value['comment'];
+	
+		if (isset($value['participants'])) {
+			$x=unserialize($value['participants']);
+			unset($this->participants);
+			foreach ($x as $participant) {
 				$this->participants[]=$participant;
 			}
 		}
@@ -260,9 +358,12 @@ class td2_timeframe
 		global $wpdb;
 		$sql_user='SELECT ID, user_login, display_name FROM '.$wpdb->users;
 		$users=$wpdb->get_results($sql_user, ARRAY_A);
+
 		foreach ($users as $user) { 
-			if($user->login_name == $_POST['td2_participant_opts']) 
-				$user_data=array('user_id'=>$user->ID , 'user_name'=>$user->login_name);
+			if($user['user_login'] == $_POST['td2_participant_opts']) {
+				$user_data=array('user_id'=>$user['ID'] , 'user_name'=>$user['user_login']);
+				break;
+			}
 		}
 		$participant = new td2_participant($_POST['id_timeframe']);
 		$participant->add_data($user_data);
@@ -295,13 +396,23 @@ class td2_timeframe
 			<tr class="timeframe, mark_'.$this->mark.'">
 				<td class="td2_firstrow"></td>
 				<td class="td2_date">'.$this->date.'</td>
-				<td class="td2_start_time">'.$this->starting_time.'</td>
-				<td class="td2_end_time">'.$this->ending_time.'</td>
+				<td class="td2_start_time">'.date('G:i', $this->starting_time).'</td>
+				<td class="td2_end_time">'.date('H:i', $this->ending_time).'</td>
 				<td class="td2_count">'.$this->count.'</td>
 				<td colspan="2" class="td2_comment">'.$this->comment.'</td>
 			</tr>';
 		return $rv;
 	}
+	
+	public function save_data() {
+		global $wpdb, $table_prefix;
+		$table2 = $table_prefix.'thekendienst2_timeframe';
+		$values1= 'ID="'.$this->ID.'", ID_timeframe="'.$this->id_timeframe.'", starting_time="'.$this->starting_time.'", ending_time="'.$this->ending_time.'", count="'.$this->count.'", comment="'.$this->comment.'"';
+		$sql1='INSERT INTO '.$table2.' SET '.$values1.'';
+		$wpdb->query($sql1);
+		echo mysql_error();
+	}
+	
 }
 
 class td2_participant
@@ -309,14 +420,21 @@ class td2_participant
 	public $user_id="";
 	public $name="";
 	public $mother_timeframe;
+	public $mark;
 	
 	public function __construct($id_timeframe=null) {
 		$this->mother_timeframe =$id_timeframe;
 	}
 	
-	public function add_data($content) {
-		$this->user_id=$content['user_ID'];
-		$this->name=$content['user_name'];
+	public function add_data($value) {
+		if(!is_object($value)) {
+			$this->user_id=$value['user_id'];
+			$this->name=$value['user_name'];
+		}
+		else {
+			$this->user_id=$value->user_id;
+			$this->name=$value->name;
+		}
 		return $this;
 	}
 	public function get_data() {
@@ -326,11 +444,11 @@ class td2_participant
 	public function print_data() {
 		$rv='';
 		$rv.='
-			<tr class="participant, mark_'.var_export($x->mark).'">
+			<tr class="participant, mark_'.$this->mark.'">
 				<td class="td2_firstrow">&nbsp;</td>
 				<td colspan="2">&nbsp;<td>
 				<td>'.$this->user_id.'</td>
-				<td colspan="2">'.$this->user_name.'</td>
+				<td colspan="2">'.$this->name.'</td>
 				<td>$nbsp;</td>
 			</tr>';
 		return $rv;
@@ -340,17 +458,17 @@ class td2_participant
 		$table = $table_prefix.'thekendienst2_timeframe';
 		$sql_get='SELECT id_timeframe, participants from '.$table.' WHERE id_timeframe='.$this->mother_timeframe.' ORDER BY id_timeframe';
 		$timeframe_data=$wpdb->get_results($sql_get, ARRAY_A);
-		if(mysql_affected_rows()>1) return 'something went wrong: there are doublettes in the database';
-		$timeframe_data[0];
+		if(mysql_affected_rows()>1) return td2_admin_notice('something went wrong: there are doublettes in the database');
 		$participants=unserialize($timeframe_data[0]['participants']);
-		$breakout==false;
-		foreach($participants as $p) {
-			if($breakout==true || $p->user_id==$this->user_id) {
-				return 'allready subscribed';
+		if($participants!=false) {
+			foreach($participants as $p) {
+				if($p->user_id==$this->user_id) {
+					return td2_admin_notice('allready subscribed');
+				}
 			}
 		}
 		$participants[]=$this;
-		$sql_put='UPDATE '.$table1.' SET participants='.serialize($participants).'WHERE id_timeframe='.$this->mother_timeframe.'';
+		$sql_put="UPDATE ".$table." SET participants='".serialize($participants)."' WHERE id_timeframe='".$this->mother_timeframe."'";
 		$wpdb->query($sql_put);
 		return 'you‘ve been subscribed';
 	}
@@ -376,7 +494,6 @@ class td2_create_new_participation_form {
 			}
 			else $rv1.='<option>'.$user["user_login"].'</option>
 			';
-			//print_r($user);
 			$rv2[]=array($user['ID']=>$user['user_login']);
 		}
 		$this->users_in_option[1]=$rv1;
@@ -417,6 +534,10 @@ class td2_create_new_participation_form {
 	public function print_data() {
 		return $this->form();
 	}
+	
+	public function participate() {
+		return;
+	}
 }
 
 class td2_create_new_event_form {
@@ -424,11 +545,15 @@ class td2_create_new_event_form {
 	public $id;
 	
 	public function __construct() {
-		$objects=td2_get_events();
-		$last=end($objects);
-		//print_r($last);
-		$this->id=$last['ID']+1;
+		$this->id=$this->get_next_id();
 		$this->session_id=session_id();
+	}
+	
+	public function get_next_id() {
+		global $wpdb, $table_prefix;
+		$table = $table_prefix.'thekendienst2_event';
+		$sql = "SELECT ID FROM ".$table." ORDER BY id DESC LIMIT 1";
+		return $wpdb->get_var($sql)+1;
 	}
 	
 	public function form() {
@@ -497,12 +622,12 @@ class td2_create_new_event_form {
 				</td>
 				<td rowspan="3" colspan="2">
 					Wieviele Zeitfenster?<br/>
-					<input type="text" value="1" size="3" maxlength="2" readonly>
+					<input type="text" name="count_of_timeframes" value="1" size="3" maxlength="2">
 				</td>
 			</tr>
 			<tr>
 				<td>&nbsp;</td>
-				<td colspan="4"><input type="radio" name="td2_options_on_creation" value="multiply" disabled="disabled">Wiederholen (obere Angaben um ein vielfaches dessen verlängern)</td>
+				<td colspan="4"><input type="radio" name="td2_options_on_creation" value="multiply">Wiederholen (obere Angaben um ein vielfaches dessen verlängern)</td>
 			</tr>
 			<tr>
 				<td>&nbsp;</td>
@@ -550,33 +675,34 @@ class td2_create_new_event_form {
 /* *************************************************** 
 basic functions
 *************************************************** */
-function td2_get_events($event=null, $mark = false, $timeframe=null) {
+function td2_get_events($event=NULL, $mark = false, $timeframe=NULL) {
 	//if (!isset($event)) $event = new td2_event;
 	global $wpdb, $table_prefix;
 	$table1 = $table_prefix.'thekendienst2_event';
 	$table2 = $table_prefix.'thekendienst2_timeframe';
-	if (is_object($event) && !is_null($event)) $event_data=$event->get_data();
-	elseif (is_numeric($event) && !is_null($event)) {
+	if (is_object($event)) $event_data=$event->get_data();
+	elseif (is_numeric($event)) {
 		$event_data['ID']=$event;
 	}
-	if (isset($event_data['ID']) && $mark=false) {
-		$sql1='SELECT * FROM '.$table1.' LEFT JOIN '.$table2.' ON '.$table1.'.ID = '.$table2.'.ID WHERE '.$table2.'.ID='.$event_data['ID'].' GROUP BY '.$table2.'.ID ORDER BY '.$table2.'.ID, date, starting_time';
-		$one=true;
-	}
-	elseif (isset($event_data['ID']) && $mark=true) {
-		$sql1='SELECT * FROM '.$table1.' LEFT JOIN '.$table2.' ON '.$table1.'.ID = '.$table2.'.ID GROUP BY '.$table2.'.ID ORDER BY '.$table2.'.ID, date, starting_time';
-		$one=false;
+	if (isset($event_data['ID'])) {
+		if ($mark=false) {
+			$sql1='SELECT ID, Name FROM '.$table1.' WHERE ID='.$event_data['ID'].' GROUP BY ID ORDER BY ID, Name';
+			$one=true;
+		}
+		else {
+			$sql1='SELECT * FROM '.$table1.' LEFT JOIN '.$table2.' ON '.$table1.'.ID = '.$table2.'.ID GROUP BY '.$table2.'.ID ORDER BY '.$table2.'.ID, date, starting_time';
+			$one=false;
+		}
 	}
 	else {
-		$sql1='SELECT * FROM '.$table1.' LEFT JOIN '.$table2.' ON '.$table1.'.ID = '.$table2.'.ID GROUP BY '.$table2.'.ID ORDER BY '.$table2.'.ID, date, starting_time';
+		$sql1='SELECT ID, Name FROM '.$table1.' GROUP BY ID ORDER BY ID';
 		$one=false;
 	}
 	$events_data=$wpdb->get_results($sql1, ARRAY_A);
 	if(isset($events_data[0])) {
-		foreach($events_data as $event_data) { //db to array of objects
-			//events
+		foreach($events_data as $event_data) {
 			$current_event = new td2_event;
-			if($mark && $event_data['ID']==$event_data['ID']) 
+			if($mark) 
 			{
 				$current_event->add_data(array_merge($event_data, array('mark'=>true)));
 			}
@@ -586,8 +712,9 @@ function td2_get_events($event=null, $mark = false, $timeframe=null) {
 			}
 			$objects_in_order[]=$current_event;
 			//list all timeframes of current event
-			$sql2='SELECT * FROM '.$table1.' LEFT JOIN '.$table2.' ON '.$table1.'.ID = '.$table2.'.ID   WHERE '.$table2.'.ID="'.$event_data['ID'].'" ORDER BY '.$table2.'.ID, '.$table2.'.date, '.$table2.'.starting_time, '.$table2.'.comment';
+			$sql2='SELECT * FROM '.$table1.' LEFT JOIN '.$table2.' ON '.$table1.'.ID = '.$table2.'.ID   WHERE '.$table2.'.ID="'.$event_data['ID'].'" ORDER BY '.$table2.'.ID, date, starting_time, comment';
 			$timeframeS_data=$wpdb->get_results($sql2, ARRAY_A);
+
 			foreach($timeframeS_data as $timeframe_data) 
 			{
 				$timeframe=new td2_timeframe;
@@ -596,9 +723,11 @@ function td2_get_events($event=null, $mark = false, $timeframe=null) {
 					foreach($timeframe->participants as $participant) $objects_in_order[]=$participant;
 				}
 				$objects_in_order[]=new td2_create_new_participation_form($timeframe->id_timeframe, $current_event->ID);
+				
 			}
 		}
-		return array($objects_in_order, $one);
+		$x=array($objects_in_order, $one);
+		return $x;
 	}
 	else {
 		return __('There is no data in the database');
@@ -607,26 +736,33 @@ function td2_get_events($event=null, $mark = false, $timeframe=null) {
 }
 
 function td2_get_events_printed($content, $event=null, $mark = false) {
-	$objects_in_order_pre=td2_get_events($event=null, $mark = false);
-	$objects_in_order=$objects_in_order_pre[0];
-	$one=$objects_in_order_pre[1];
-	$html_table = td2_put_objects_in_a_table($objects_in_order);
-	if($content==null) {
+	$process=true;
+	if ($process) {
+		$objects_in_order_pre = td2_get_events($event, $mark);
+		$objects_in_order=$objects_in_order_pre[0];
+		$one=$objects_in_order_pre[1];
+		$html_table= td2_put_objects_in_a_table($objects_in_order);
+		foreach ($objects_in_order as $value) {
+			if(get_class($value) == 'td2_event') {
+				$replacestring1='[Thekendienst='.$value->ID.']';
+				$replacestring2='[Thekendienst='.$value->Name.']';
+				if(strpos($content, $replacestring1)) {
+					$html_table= td2_put_objects_in_a_table($value);
+					$content=str_replace($replacestring1, $html_table, $content);
+				}
+				elseif(strpos($content, $replacestring2)) {
+					$html_table= td2_put_objects_in_a_table($value);
+					$content=str_replace($replacestring2, $html_table, $content);
+				}
+			}
+		}
+	}
+	if (!isset($content)) {
 		return $html_table;
 	}
-	elseif($one) {
-		$replacestring1='[Thekendienst='.$event_data['ID'].']';
-		$replacestring2='[Thekendienst='.$event_data['Name'].']';
-		//Hier fehlt eine Funktion zum überprüfen ob eine Zeichenfolge in $content enthalten ist
-		if(strpos($content, $replacestring1)) {
-			$content=str_replace($replacestring1, $htmltable, $content);
-		}
-		elseif(strpos($content, $replacestring2)) {
-			$content=str_replace($replacestring2, $htmltable, $content);
-		}
-		return $content;
-	}
+	else return $content;
 }
+
 
 function td2_put_objects_in_a_table($input) {
 	$rv="";
@@ -634,24 +770,7 @@ function td2_put_objects_in_a_table($input) {
 	<table>";
 	foreach ($input as $x) {
 		$rv.=$x->print_data();
-		/*switch (get_class($x)) {
-			case 'td2_event':
-				$rv.=$x->print_data();
-				break;
-			case 'td2_timeframe':
-				$rv.=$x->print_data();
-				break;
-			case 'td2_participant' :
-				$rv.=$x->print_data();
-			break;
-			default : ;
-		}
-		*/
 	}
-	/*else '
-		<tr>
-			<td>'.__("An error occured with the interpretation of the data. Are you sure you have any data in the database? -> call support!").'</td>
-		</tr>'; */
 	$rv.="
 	</table>";
 	return $rv;
@@ -659,7 +778,6 @@ function td2_put_objects_in_a_table($input) {
 
 function td_createdatabase() { 
 //creating and changing database, if needed
-
 	global $wpdb, $table_prefix;
 	global $thekendienst2_db_version;
 	$rueckgabe=null;
@@ -676,8 +794,8 @@ function td_createdatabase() {
 			ID mediumint(9) NOT NULL,
 			ID_timeframe mediumint (9) NOT NULL AUTO_INCREMENT KEY,
 			date varchar(9) NOT NULL,
-			starting_time time,
-			ending_time time,
+			starting_time int,
+			ending_time int,
 			count smallint(9),
 			comment varchar(255),
 			participants text,
