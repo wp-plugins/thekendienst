@@ -119,7 +119,7 @@ class td2_event
 	public function add_timeframe($content = array('ID'=>-1)) {
 	// if there is no id on runtime specified, the default value of -1 will cause this function to kill itself.
 		$timeframe_ids= array();
-		if ($content['ID']!=-1 && !isset($this->timeframes)) 
+		if ($content['ID']!=-1) 
 		{
 			$this->timeframes[] = new td2_timeframe;
 			end($this->timeframes)->add_data($content);
@@ -168,6 +168,7 @@ class td2_event
 			'count' => $_POST['count'],
 			'comment' => $_POST['count']
 		);
+		echo '<div width="50%" style="outline: 1px solid black">Value of $data:<br/>'.print_r($data, true).'</div>';
 		switch ($_POST['td2_options_on_creation']) {
 			case 'once' : 
 				$this->add_timeframe($data);
@@ -182,16 +183,19 @@ class td2_event
 				break;
 			case 'split' : 
 				$lasts=$data['ending_time']-$data['starting_time'];
-				$frame=$lasts % $_POST['count_of_frames'];
-				$middle=$lasts / 2;
-				for($i=$_POST['count_of_frames']%2; $i>=0; $i--) {
-					$begin_rev[]=$middle-$frame;
-				}
+				$frame=floor($lasts/$_POST['count_of_timeframes']);
+				$middle=floor($lasts/2);
+				//if($_POST['count_of_timeframes']%2==0) {
+					for($i=floor($_POST['count_of_timeframes']/2); $i>=0; $i--) {
+						$begin_rev[]=$middle-$frame;
+					}
+				//}
+				//else
 				$timeframes=array_reverse($begin_rev);
 				if($timeframes[0]>$start) {
 					$timeframes[0]=$timeframes[0]+$timeframes[0]-$start;
 				}
-				for($i=$_POST['count_of_frames']%2; $i<$_POST['count_of_frames']; $i++) {
+				for($i=$_POST['count_of_timeframes']%2; $i<$_POST['count_of_timeframes']; $i++) {
 					$timeframes[]=$middle+$frame;
 				}
 				foreach($timeframes as $key=>$frame_start) {
@@ -627,7 +631,7 @@ class td2_create_new_event_form {
 			</tr>
 			<tr>
 				<td>&nbsp;</td>
-				<td colspan="4"><input type="radio" name="td2_options_on_creation" value="split" disabled="disabled"> Gleichmäßig verteilen (obere Angaben ist Gesamtzeitraum und wird gleichmäßig unterteilt</td>
+				<td colspan="4"><input type="radio" name="td2_options_on_creation" value="split"> Gleichmäßig verteilen (obere Angaben ist Gesamtzeitraum und wird gleichmäßig unterteilt</td>
 			</tr>
 			<tr>
 				<td colspan="7">
