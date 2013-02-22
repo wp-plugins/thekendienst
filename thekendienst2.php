@@ -21,8 +21,7 @@ $thekendienst2_db_version='2.0';
 hooks & catcher
 *************************************************** */
 if(isset($_POST['td2_participate_submit'])) {
-	if(isset($content)) add_filter('the_content','td2_participator');
-	else add_action('td2_participate_retrieve', 'td2_participator');
+	add_action('td2_participate_retrieve', 'td2_participator');
 }
 if(isset($_POST['td2_eventcreation'])) {
 	if(isset($content)) add_filter('the_content','td2_event_creator');
@@ -30,6 +29,7 @@ if(isset($_POST['td2_eventcreation'])) {
 }
 
 add_filter('the_content', 'td2_get_events_printed');
+add_filter('the_footer', 'td2_show_POST_for_development');
 
 add_action('admin_notices', 'td2_admin_notice');
 add_action('wp_head', 'td2_loadstylesheets');
@@ -56,9 +56,6 @@ switch and decide functions
 *************************************************** */
 
 function td2_admin_panel_decider($content) {
-	
-	echo '<div width="50%" style="outline: 1px solid black">Value of $_POST:<br/>'.print_r($_POST, true).'</div>';
-	do_action('td2_participate_retrieve');
 	do_action('td2_event_create_retrieve');
 	$new_event_form= new td2_create_new_event_form();
 	echo $new_event_form->print_data();
@@ -88,7 +85,6 @@ function td2_participator($content) {
 	}
 	return $content;
 }
-
 /* *************************************************** 
 classes
 *************************************************** */
@@ -340,7 +336,7 @@ class td2_timeframe
 		$this->count=$value['count'];
 		$this->comment=$value['comment'];
 	
-		if (isset($value['participants'])) {
+		if (isset($value['participants']) && $value['participants']!="") {
 			$x=unserialize($value['participants']);
 			unset($this->participants);
 			foreach ($x as $participant) {
@@ -736,16 +732,30 @@ function td2_get_events($event=NULL, $mark = false, $timeframe=NULL) {
 }
 
 function td2_get_events_printed($content, $event=null, $mark = false) {
-	$process=true;
-	if ($process) {
-		$objects_in_order_pre = td2_get_events($event, $mark);
-		$objects_in_order=$objects_in_order_pre[0];
-		$one=$objects_in_order_pre[1];
-		$html_table= td2_put_objects_in_a_table($objects_in_order);
-		foreach ($objects_in_order as $value) {
+	do_action('td2_participate_retrieve');
+	$objects_in_order_pre = td2_get_events($event, $mark);
+	$objects_in_order=$objects_in_order_pre[0];
+	echo '<div width="50%" style="outline: 1px solid black">Value of $_POST:<br/>'.print_r($_POST, true).'</div>';
+	if (isset($content)) {
+		foreach ($objects_in_order as $key=>$value) {
 			if(get_class($value) == 'td2_event') {
-				$replacestring1='[Thekendienst='.$value->ID.']';
-				$replacestring2='[Thekendienst='.$value->Name.']';
+				$found[]=$key;
+			}
+		}
+		foreach ($found as $key=>$start) {
+			if ($found[$key]!=end($found)) $next=$found[$key+1];
+			else $next++;
+			foreach ($objects_in_order as $key=>$value) {
+				if ($key>=$start && $key<$next) {
+					$objects_to_find[$start][]=$value;
+				}
+			}
+		}
+		foreach($objects_to_find as $key=>$value) {
+				if(get_class($value[0]) == 'td2_event') {
+					$replacestring1='[Thekendienst='.$objects_in_order[$key]->ID.']';
+					$replacestring2='[Thekendienst='.$objects_in_order[$key]->Name.']';
+				}
 				if(strpos($content, $replacestring1)) {
 					$html_table= td2_put_objects_in_a_table($value);
 					$content=str_replace($replacestring1, $html_table, $content);
@@ -754,10 +764,10 @@ function td2_get_events_printed($content, $event=null, $mark = false) {
 					$html_table= td2_put_objects_in_a_table($value);
 					$content=str_replace($replacestring2, $html_table, $content);
 				}
-			}
 		}
 	}
 	if (!isset($content)) {
+		$html_table= td2_put_objects_in_a_table($objects_in_order);
 		return $html_table;
 	}
 	else return $content;
@@ -845,6 +855,11 @@ function td_createdatabase() {
 function td2_admin_notice($string) { 
 //message to admin in backend
 	return $string;
+}
+
+function td2_show_POST_for_development($content) {
+	echo $content=print_r($_POST, true).$content;
+	return $content;
 }
 
 function td2_loadstylesheets(){ 
